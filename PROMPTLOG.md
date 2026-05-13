@@ -128,3 +128,34 @@ Build an energy and lifetime module for `wsnsim`, modeling node energy consumpti
 
 ## Status
 All Tests passed
+
+---
+
+Date: 2026-05-13
+
+## Milestone 1 Finalization Goal
+Prepare the repository for Milestone 1 submission by addressing review follow-ups without adding Week 4 MAC requirements.
+
+## Prompt Summary
+- Refresh README title and summary so the project is presented as the Milestone 1 Week 1-3 simulator foundation.
+- Replace the placeholder clone URL with the repository remote.
+- Expand the README testing summary to mention core, channel, energy, and scheduler-driven integration coverage.
+- Add one integration test where scheduled simulator events drive `EnergyModel` state transitions over simulated time.
+- Add this new prompt-log entry for the Milestone 1 finalization pass.
+
+## Accepted Suggestions
+- Kept the scope limited to Milestone 1 deliverables: event core, channel, energy, documentation, tests, and prompt log.
+- Used the existing `Scheduler` API to drive energy state transitions in the new test.
+- Kept the energy assertion unit-based: TX `1.0 W * 2 s`, RX `0.5 W * 3 s`, and SLEEP `0.1 W * 2 s`, for a total of `3.7 J`.
+- Used the actual Git remote `git@github.com:4lm4n4ch/Sensor-networks.git` in the README.
+
+## Rejected Suggestions
+- Rejected adding or requiring Week 4 MAC protocol behavior for this milestone.
+- Rejected broad README rewrites beyond the stale title, clone command, module list, and testing summary.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_energy.py`: 12 passed.
+- Ran `.venv/bin/python -m pytest -q`: 33 passed.
+
+## Status
+Milestone 1 finalization updates complete and tests passed.

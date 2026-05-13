@@ -1,10 +1,10 @@
-# wsnsim: Wireless Sensor Network Simulator (Week 1 - v0 Core)
+# wsnsim: Wireless Sensor Network Simulator (Milestone 1)
 
 ## Project Overview
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-**Week 1 Implementation (wsnsim v0)** focuses on building the minimal core of the simulator. This includes the fundamental discrete-event simulation engine, a robust scheduling mechanism, time handling, basic logging/tracing, and initial unit tests to ensure correctness and reproducibility.
+**Milestone 1** covers the Week 1-3 simulator foundation: a deterministic discrete-event core, a basic radio channel model, a state-based energy/lifetime model, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -28,19 +28,22 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `energy.py`: Contains functions related to energy consumption metrics.
         -   `latency.py`: Placeholder for latency measurement functions.
         -   `pdr.py`: Placeholder for Packet Delivery Ratio (PDR) calculations.
-    -   `models/`: Placeholder for various WSN node and network models (e.g., radio, sensor, battery models).
+    -   `models/`: WSN node and network models.
         -   `channel.py`: Week 2 log-distance radio channel model with shadowing, RSSI, SNR, PRR, BER/PER, and reproducible packet success sampling.
+        -   `energy.py`: Week 3 state-based energy and lifetime model with TX/RX/IDLE/SLEEP power states.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
     -   `scenarios/`: Placeholder for defining specific WSN simulation scenarios (e.g., node deployment, traffic patterns).
 -   `tests/`: Contains unit and integration tests for the `wsnsim` codebase.
     -   `test_core.py`: Comprehensive tests for the core simulation engine (`Scheduler`, `SimClock`, `TraceLogger`) and `RNG` and basic `metrics`.
-    -   `test_channel.py`: Basic tests for the placeholder channel model.
+    -   `test_channel.py`: Channel tests for distance trends, probability bounds, reproducibility, validation, and manual PRR points.
+    -   `test_energy.py`: Energy tests for unit-consistent consumption, depletion clamp, validation, lifetime trends, and scheduler integration.
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
     -   `week02_prr_curve.py`: Generates the Week 2 PRR-vs-distance curve.
+    -   `week03_energy_lifetime.py`: Generates Week 3 lifetime-vs-duty-cycle data and plot.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -304,8 +307,8 @@ To set up and run `wsnsim`, follow these steps:
 
 1.  **Clone the Repository**:
     ```bash
-    git clone https://github.com/your-username/wsnsim.git
-    cd wsnsim
+    git clone git@github.com:4lm4n4ch/Sensor-networks.git
+    cd Sensor-networks
     ```
 
 2.  **Create a Virtual Environment** (recommended):
@@ -335,15 +338,15 @@ To set up and run `wsnsim`, follow these steps:
 
 ## Testing Section
 
-`wsnsim` emphasizes robust testing to ensure the correctness and deterministic behavior of the simulation engine.
+`wsnsim` emphasizes robust testing to ensure the correctness and deterministic behavior of the Milestone 1 simulator foundation.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility, as well as basic metrics.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; and energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 
 To run all tests:
 ```bash
-pytest
+.venv/bin/python -m pytest -q
 ```
 
 ## Example Output

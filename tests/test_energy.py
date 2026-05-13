@@ -9,6 +9,7 @@ from wsnsim.models.energy import (
     EnergyState,
     PowerProfile,
 )
+from wsnsim.sim import Scheduler
 
 
 def make_energy_model(
@@ -158,6 +159,46 @@ def test_transition_integrates_previous_state_before_switching():
     assert model.remaining_energy_j == pytest.approx(90.0)
     assert model.current_state == EnergyState.RX
     assert model.last_update_time_s == pytest.approx(10.0)
+
+
+def test_scheduler_drives_energy_state_transitions():
+    model = make_energy_model(
+        capacity_j=100.0,
+        tx_w=1.0,
+        rx_w=0.5,
+        idle_w=0.2,
+        sleep_w=0.1,
+    )
+    scheduler = Scheduler(seed=123)
+
+    scheduler.schedule(
+        time=0.0,
+        callback=lambda state: model.transition_to(state, scheduler.clock.now),
+        payload=EnergyState.TX,
+    )
+    scheduler.schedule(
+        time=2.0,
+        callback=lambda state: model.transition_to(state, scheduler.clock.now),
+        payload=EnergyState.RX,
+    )
+    scheduler.schedule(
+        time=5.0,
+        callback=lambda state: model.transition_to(state, scheduler.clock.now),
+        payload=EnergyState.SLEEP,
+    )
+    scheduler.schedule(
+        time=7.0,
+        callback=lambda _: model.update(scheduler.clock.now),
+    )
+
+    executed = scheduler.run()
+
+    assert executed == 4
+    assert scheduler.clock.now == pytest.approx(7.0)
+    assert model.current_state == EnergyState.SLEEP
+    assert model.last_update_time_s == pytest.approx(7.0)
+    assert model.consumed_energy_j == pytest.approx(3.7)
+    assert model.remaining_energy_j == pytest.approx(96.3)
 
 
 def test_higher_active_duty_cycle_reduces_lifetime():
