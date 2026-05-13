@@ -29,6 +29,10 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `latency.py`: Placeholder for latency measurement functions.
         -   `pdr.py`: Placeholder for Packet Delivery Ratio (PDR) calculations.
     -   `models/`: Placeholder for various WSN node and network models (e.g., radio, sensor, battery models).
+        -   `channel.py`: Week 2 log-distance radio channel model with shadowing, RSSI, SNR, PRR, BER/PER, and reproducible packet success sampling.
+    -   `core/`: Shared neutral dataclasses used across simulator layers.
+        -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
+        -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
     -   `scenarios/`: Placeholder for defining specific WSN simulation scenarios (e.g., node deployment, traffic patterns).
 -   `tests/`: Contains unit and integration tests for the `wsnsim` codebase.
     -   `test_core.py`: Comprehensive tests for the core simulation engine (`Scheduler`, `SimClock`, `TraceLogger`) and `RNG` and basic `metrics`.
@@ -36,6 +40,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
+    -   `week02_prr_curve.py`: Generates the Week 2 PRR-vs-distance curve.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -90,6 +95,208 @@ Random Number Generation (RNG) is handled by the `RNG` class (`wsnsim.utils.rng.
 
 1.  **Reproducible**: By passing a `seed` to the `Scheduler` (which then passes it to `RNG`), the entire sequence of random numbers generated during a simulation run is repeatable.
 2.  **Consistent**: All modules requiring randomness should use an instance of the `RNG` class, avoiding reliance on Python's global `random` module.
+
+## Week 2: Radio Channel Models
+
+Week 2 adds a reproducible log-distance radio channel in `wsnsim.models.channel`. The channel is independent of MAC, routing, reliability, and energy modules. Packet metadata lives in `wsnsim.core.packet.Packet`, while one transmission attempt is reported as `wsnsim.core.link.LinkStats`.
+
+### Channel Parameters
+
+`ChannelConfig` uses explicit radio units:
+
+-   `tx_power_dbm`: transmit power in dBm.
+-   `d0_m`: reference distance in meters. Must be positive.
+-   `path_loss_d0_db`: reference path loss at `d0_m`, in dB.
+-   `path_loss_exponent`: log-distance exponent. Must be positive.
+-   `shadowing_sigma_db`: standard deviation of log-normal shadowing, in dB. Must be non-negative.
+-   `noise_floor_dbm`: receiver noise floor in dBm.
+-   `snr_threshold_db`: logistic PRR midpoint in dB.
+-   `transition_width_db`: logistic transition width in dB. Must be positive.
+-   `seed`: seed for the channel-local `numpy.random.default_rng`.
+
+### Formulas
+
+The effective distance prevents singular behavior below the reference distance:
+
+```text
+d_eff = max(distance_m, d0_m)
+```
+
+Path loss uses a single pinned shadowing draw per transmission:
+
+```text
+PL(d) = PL(d0) + 10 * n * log10(d_eff / d0) + X_sigma
+X_sigma ~ Normal(0, sigma)
+```
+
+RSSI and SNR are then computed as:
+
+```text
+RSSI_dbm = tx_power_dbm - path_loss_db
+SNR_db = RSSI_dbm - noise_floor_dbm
+SNR_linear = 10 ** (SNR_db / 10)
+```
+
+The default packet reception probability is logistic:
+
+```text
+PRR = 1 / (1 + exp(-(SNR_db - snr_threshold_db) / transition_width_db))
+```
+
+The optional BPSK-in-AWGN BER/PER model is also reported:
+
+```text
+BER = 0.5 * erfc(sqrt(SNR_linear))
+packet_bits = packet_size_bytes * 8
+PER = 1 - (1 - BER) ** packet_bits
+PRR_BER = (1 - BER) ** packet_bits
+```
+
+`PRR` is a probability. Stochastic packet success is a separate one-shot realization, computed only when requested:
+
+```text
+success = channel_rng.random() < prr_value
+```
+
+### Manual Validation At Two Distances
+
+Using the default Week 2 parameters with fixed shadowing `X_sigma = 0 dB`, packet size `64 bytes`, `tx_power_dbm = 0`, `d0_m = 1`, `PL(d0) = 40 dB`, `n = 2.7`, `noise_floor_dbm = -100`, `snr_threshold_db = 10`, and `transition_width_db = 2`:
+
+```text
+Distance 10 m:
+PL = 40 + 10 * 2.7 * log10(10 / 1) + 0 = 67.0000 dB
+RSSI = 0 - 67.0000 = -67.0000 dBm
+SNR = -67.0000 - (-100) = 33.0000 dB
+PRR_logistic = 1 / (1 + exp(-(33.0000 - 10) / 2)) = 0.999990
+
+Distance 50 m:
+PL = 40 + 10 * 2.7 * log10(50 / 1) + 0 = 85.8722 dB
+RSSI = 0 - 85.8722 = -85.8722 dBm
+SNR = -85.8722 - (-100) = 14.1278 dB
+PRR_logistic = 1 / (1 + exp(-(14.1278 - 10) / 2)) = 0.887345
+```
+
+These two points are also checked in `tests/test_channel.py` to verify the full TX -> path loss -> RSSI -> SNR -> PRR chain against hand-computed values.
+
+### Running Week 2 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_channel.py
+```
+
+To run the complete test suite:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+### Running the PRR Experiment
+
+```bash
+.venv/bin/python experiments/week02_prr_curve.py
+```
+
+The experiment sweeps distance from 1 m to 150 m and compares `sigma = 0 dB` against `sigma = 4 dB`. For the shadowed case, the plotted value is a Monte Carlo mean PRR rather than one-shot packet success. The figure is saved to:
+
+```text
+reports/figures/week02_prr_vs_distance.png
+```
+
+Expected interpretation: as distance increases, path loss increases, RSSI and SNR decrease, and PRR falls. The shadowed curve is an average over many channel realizations, so it is smoother and represents expected delivery probability under fading rather than a single packet trace.
+
+## Week 3: Energy and Lifetime
+
+Week 3 adds a state-based node energy model in `wsnsim.models.energy`. It is designed for use from the discrete-event scheduler: each state transition first integrates the energy consumed in the previous state over elapsed simulated time.
+
+### Energy Architecture
+
+-   `EnergyState`: radio/MCU power states: `TX`, `RX`, `IDLE`, and `SLEEP`.
+-   `PowerProfile`: configured power draw for each state, in watts.
+-   `Battery`: capacity, initial energy, and remaining energy, in joules.
+-   `EnergyModel`: current state, last update time, consumed energy, remaining energy, depletion status, and duty-cycle lifetime estimates.
+-   `DutyCycleConfig`: per-cycle TX/RX/IDLE/SLEEP durations for lifetime estimation.
+-   `LifetimeEstimate`: average power and lifetime in seconds, hours, and days.
+
+### Energy Formula And Units
+
+The model uses:
+
+```text
+energy_j = power_w * duration_s
+```
+
+State updates are integrated as:
+
+```text
+elapsed_s = time_s - last_update_time_s
+consumed_j = power(current_state)_w * elapsed_s
+remaining_energy_j = max(0, remaining_energy_j - consumed_j)
+```
+
+Watts and joules are kept separate in names: `_w` is power, `_j` is energy, and `_s` is time. Negative durations and backward timestamps raise `ValueError`. Remaining energy is clamped at zero, and `is_depleted` becomes true once the battery reaches zero.
+
+### Duty-Cycle Lifetime Estimate
+
+For a repeating cycle:
+
+```text
+energy_per_cycle_j =
+    tx_w * tx_time_s
+  + rx_w * rx_time_s
+  + idle_w * idle_time_s
+  + sleep_w * sleep_time_s
+
+average_power_w = energy_per_cycle_j / cycle_time_s
+lifetime_seconds = battery_capacity_j / average_power_w
+lifetime_hours = lifetime_seconds / 3600
+lifetime_days = lifetime_seconds / 86400
+```
+
+The estimator supports comparing multiple duty-cycle values. Higher active-time ratios should reduce estimated lifetime when TX/RX/IDLE power exceeds sleep power.
+
+### Manual Validation
+
+A directly checkable case is included in `tests/test_energy.py`:
+
+```text
+Power = 1 W
+Duration = 10 s
+Energy = 1 W * 10 s = 10 J
+```
+
+With a 100 J battery, remaining energy is 90 J after that consumption.
+
+### Week 3 Sanity Checklist
+
+-   Units: power is in watts, energy is in joules, simulated time is in seconds.
+-   W vs J: energy is only produced by multiplying configured power by elapsed time.
+-   Timestamp monotonicity: `update(time_s)` and `transition_to(..., time_s)` reject backward time.
+-   Packet duration consistency: callers should convert packet airtime to seconds before calling `consume(...)` or scheduling TX/RX transitions.
+-   Sleep and idle separation: `SLEEP` and `IDLE` have independent configured power values.
+-   Switching cost: transition energy/time overhead is not modeled in Week 3; transitions only integrate the previous state up to the transition timestamp.
+
+### Running Week 3 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_energy.py
+```
+
+### Running The Lifetime Experiment
+
+```bash
+.venv/bin/python experiments/week03_energy_lifetime.py
+```
+
+The experiment evaluates several active-time ratios, saves a CSV, and generates a lifetime plot:
+
+```text
+reports/week03_energy_lifetime.csv
+reports/figures/week03_lifetime_vs_duty_cycle.png
+```
+
+### Week 3 Limitations
+
+This is a first-order lifetime model. It does not yet model radio startup costs, state-switching transients, voltage conversion efficiency, battery recovery effects, temperature, leakage variation, interference-driven retransmissions, or packet-level airtime calculation. Those can be layered on later without changing the basic state-integration API.
 
 ## Installation & Running
 
