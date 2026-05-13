@@ -301,6 +301,104 @@ reports/figures/week03_lifetime_vs_duty_cycle.png
 
 This is a first-order lifetime model. It does not yet model radio startup costs, state-switching transients, voltage conversion efficiency, battery recovery effects, temperature, leakage variation, interference-driven retransmissions, or packet-level airtime calculation. Those can be layered on later without changing the basic state-integration API.
 
+## Week 4: MAC Protocols
+
+Week 4 adds a testable MAC layer in `wsnsim.models.mac` for comparing ALOHA and a simplified CSMA-style protocol. This work is separate from the Milestone 1 foundation: Milestone 1 still covers the scheduler, channel, energy model, README, tests, repository, and prompt log.
+
+### MAC Architecture
+
+-   `MACPacket`: packet metadata used by MAC protocols.
+-   `Transmission`: one packet attempt with `start_time_s`, `duration_s`, and exclusive `end_time_s`.
+-   `CollisionDomain`: shared medium state. It tracks active transmissions and marks collisions when intervals overlap on the same channel.
+-   `AlohaMAC`: sends immediately on request with no carrier sensing.
+-   `CSMAMAC`: senses the medium, backs off when busy, increases the contention window up to `cw_max`, and drops after `max_retries`.
+-   `MACResult`: per-packet status, attempts, backoffs, collision count, delivery time, and delay.
+
+The MAC classes are scheduler-compatible: a send request is scheduled at an absolute simulation time, and transmission-end events are scheduled by the MAC. Same-time scheduler events remain deterministic because the existing scheduler orders by time, then priority, then sequence number.
+
+### Collision Definition
+
+Transmission intervals are half-open:
+
+```text
+[start_time_s, start_time_s + duration_s)
+```
+
+Two transmissions collide if both are on the same `channel_id` and their active intervals overlap:
+
+```text
+start_a < end_b and start_b < end_a
+```
+
+This means equal start times collide, partially overlapping intervals collide, and back-to-back packets where one ends exactly when the next starts do not collide. A collided packet is not delivered. A non-collided packet is delivered only if the optional packet-level channel hook also allows delivery; by default the hook always succeeds.
+
+### Carrier Sensing
+
+For Week 4, carrier sensing is intentionally simple: the channel is busy if `CollisionDomain.is_busy(time_s, channel_id)` finds an active transmission whose interval contains the sensing time. RSSI thresholds, CCA durations, hidden terminals, capture effect, and interference power summation are left for later weeks.
+
+### CSMA Backoff
+
+The simplified CSMA backoff uses a local deterministic `numpy.random.default_rng(seed)`:
+
+```text
+random_slots = rng.integers(0, CW + 1)
+backoff_time = random_slots * slot_time_s
+```
+
+When the channel is busy, `CW` grows toward `cw_max`. If the packet still cannot access the channel after `max_retries`, it is dropped with reason `max_retries_busy`.
+
+This is not a full IEEE 802.15.4 CSMA/CA model. It does not implement superframes, beacons, ACKs, CCA timing, radio turnaround, the NB/BE state machine, or energy-detection thresholds. It is a deliberately small model for timing, overlap collisions, reproducible backoff, and first-order energy hooks.
+
+### Energy Hooks
+
+If an `EnergyModel` is supplied for a node, MAC events trigger state transitions:
+
+-   TX when a transmission starts.
+-   IDLE when a transmission ends or while waiting for a future retry.
+-   RX briefly during carrier sensing in CSMA.
+-   SLEEP only when scheduled explicitly outside this MAC layer.
+
+Carrier sensing is instantaneous in Week 4, so RX sensing energy is represented as a transition hook but does not yet consume a positive-duration listening interval.
+
+### ALOHA / CSMA / TDMA Comparison
+
+| Protocol | Collision behavior | Delay | Energy efficiency | Complexity | Synchronization | Low-power WSN suitability |
+| --- | --- | --- | --- | --- | --- | --- |
+| ALOHA | Collides whenever transmissions overlap; no prevention | Low when traffic is light, poor under load due retries/losses | Often wasteful under contention because collided TX energy is lost | Very low | None | Useful for sparse, simple nodes; weak at higher load |
+| CSMA | Reduces collisions by sensing before TX; still simplified here | Backoff adds delay but improves delivery under contention | Better than ALOHA under moderate load; sensing/backoff costs energy | Moderate | No global schedule required | Good baseline for low-power WSN contention access |
+| TDMA | Avoids collisions if schedule is correct | Predictable; may wait for assigned slot | Efficient when duty-cycled tightly, but idle listening must be managed | Higher | Requires time synchronization | Strong for planned periodic traffic; less flexible for bursty traffic |
+
+### Week 4 Sanity Checklist
+
+-   Collision is defined as overlapping transmission intervals, not only equal start times.
+-   Random backoff uses a deterministic seed.
+-   Same-time events are handled deterministically by scheduler priority and sequence.
+-   Carrier sensing is clearly defined as active-interval overlap at the sensing instant.
+-   Retry limits are enforced and produce packet drops.
+-   Packet durations are calculated from size and bitrate or passed explicitly as seconds.
+-   Energy hooks affect TX/RX/IDLE states when an `EnergyModel` is provided; positive-duration sensing energy is documented as a limitation.
+-   ALOHA and CSMA experiments use the same generated traffic and seed conditions.
+
+### Running Week 4 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_mac.py
+```
+
+### Running The MAC Experiment
+
+```bash
+.venv/bin/python experiments/week04_mac_aloha_csma.py
+```
+
+The experiment compares ALOHA and CSMA over three traffic loads and saves:
+
+```text
+reports/week04_mac_aloha_csma.csv
+reports/figures/week04_mac_pdr_vs_load.png
+reports/figures/week04_mac_collision_delay_vs_load.png
+```
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:

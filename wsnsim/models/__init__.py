@@ -9,15 +9,33 @@ from .energy import (
     LifetimeEstimate,
     PowerProfile,
 )
+from .mac import (
+    AlohaMAC,
+    CollisionDomain,
+    CSMAMAC,
+    MACPacket,
+    MACResult,
+    PacketStatus,
+    Transmission,
+    transmission_intervals_overlap,
+)
 
 __all__ = [
+    "AlohaMAC",
     "Battery",
     "Channel",
     "ChannelConfig",
+    "CollisionDomain",
+    "CSMAMAC",
     "DutyCycleConfig",
     "EnergyModel",
     "EnergyState",
     "LifetimeEstimate",
     "LogDistanceChannel",
+    "MACPacket",
+    "MACResult",
+    "PacketStatus",
     "PowerProfile",
+    "Transmission",
+    "transmission_intervals_overlap",
 ]

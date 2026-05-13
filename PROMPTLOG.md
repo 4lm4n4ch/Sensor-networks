@@ -131,7 +131,7 @@ All Tests passed
 
 ---
 
-Date: 2026-05-13
+Date: 2026-05-13 3:30
 
 ## Milestone 1 Finalization Goal
 Prepare the repository for Milestone 1 submission by addressing review follow-ups without adding Week 4 MAC requirements.
@@ -159,3 +159,45 @@ Prepare the repository for Milestone 1 submission by addressing review follow-up
 
 ## Status
 Milestone 1 finalization updates complete and tests passed.
+
+---
+
+Date: 2026-05-13
+
+## Week 4 Goal
+Build the first MAC layer module for `wsnsim`, focused on ALOHA vs simplified CSMA behavior: collision timing, carrier sensing, seeded backoff, retry limits, delay, and energy hooks.
+
+## Prompt Summary
+- Replace the placeholder `wsnsim/models/mac.py` with a scheduler-compatible MAC implementation.
+- Add explicit dataclasses and enums for MAC packets, transmissions, packet status, MAC events, and results.
+- Implement `CollisionDomain` with interval-overlap collision detection on the same channel.
+- Implement `AlohaMAC` with send-at-will behavior and no carrier sensing.
+- Implement `CSMAMAC` with instantaneous carrier sensing, deterministic slotted random backoff, contention-window growth, and retry-limit drops.
+- Add optional `EnergyModel` hooks for TX, RX sensing, and IDLE transitions.
+- Add deterministic pytest coverage in `tests/test_mac.py`.
+- Add `experiments/week04_mac_aloha_csma.py` to compare ALOHA and CSMA under increasing traffic load and save CSV/plots.
+- Update README with Week 4 architecture, simplifications, comparison table, sanity checklist, and run commands.
+
+## Accepted Suggestions
+- Kept collision detection explicit and testable using half-open intervals `[start, end)`.
+- Used the existing deterministic scheduler rather than adding a second event system.
+- Kept carrier sensing simple: busy means an active transmission contains the sensing time.
+- Used `numpy.random.default_rng(seed)` inside CSMA for reproducible backoff.
+- Documented that this is not full IEEE 802.15.4 CSMA/CA.
+- Kept energy integration as hooks into Week 3 state transitions instead of expanding the energy model.
+
+## Rejected Suggestions
+- Rejected RSSI-threshold carrier sensing for Week 4 to avoid mixing physical-layer sensing with the first MAC abstraction.
+- Rejected full 802.15.4 features such as ACKs, beacons, superframes, CCA timing, NB/BE state machine, hidden-terminal modeling, and capture effects.
+- Rejected changing Milestone 1 scope; Week 4 MAC documentation is clearly separated from the M1 foundation note.
+
+## Validation Steps
+- Added tests for ALOHA same-time collisions.
+- Added tests for non-overlapping ALOHA transmissions.
+- Added tests for CSMA busy-channel backoff.
+- Added tests for fixed-seed backoff reproducibility.
+- Added tests that collision detection uses interval overlap, not only equal start times.
+- Added tests that retry limits eventually drop a packet if the channel remains busy.
+
+## Status
+Week 4 MAC implementation, tests, experiment, README section, and prompt log entry added.
