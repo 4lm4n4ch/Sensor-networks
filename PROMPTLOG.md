@@ -715,3 +715,45 @@ Week 8 experiment and figures upgraded to the clearer Option A set. Week 8 tests
 
 
 ---
+
+Date: 2026-05-15
+
+## Week 9 Goal
+Implement data aggregation and lightweight compression for `wsnsim`, including raw forwarding, tree-based aggregation, delta-threshold suppression, communication cost accounting, reconstruction error metrics (MSE/MAE), an aggregation/compression trade-off experiment producing CSV/PNG artifacts, tests, README documentation, and this prompt-log entry.
+
+## Context / Files Touched
+- Added `wsnsim/models/aggregation.py` implementing `SensorReading`, `AggregationConfig`, `AggregationResult`, `aggregate_values`, `raw_forwarding`, `tree_aggregation`, `delta_suppression`, synthetic reading generator, and communication/error metrics.
+- Added `tests/test_aggregation.py` covering aggregation functions, raw/tree baselines, delta suppression, error and compression formulas, and deterministic synthetic data.
+- Added `experiments/week09_aggregation_compression.py` to sweep delta thresholds and generate `reports/week09_aggregation_compression.csv` and figure.
+- Updated `README.md` to reference Week 9 artifacts.
+
+## Prompt Summary
+- Provide analytic aggregation/compression models rather than packet-level simulation; count communications as link-layer transmissions over Week 6 BFS sink trees when topology is available.
+- Implement `aggregate_values` supporting `average`, `min`, `max` (and optional `sum`, `count`).
+- Implement `raw_forwarding` baseline (one packet per reading), `tree_aggregation` (one aggregate per active tree edge per timestamp), and `delta_suppression` with quantization and per-node reconstructed state.
+- Compute `transmitted_packets`, `transmitted_bytes`, `raw_transmitted_bytes`, `compression_ratio`, and `communication_saving_ratio` with robust divide-by-zero handling.
+- Compute reconstruction `mse` and `mae` comparing reconstructed values to ground truth.
+- Provide deterministic synthetic reading generator for reproducible experiments.
+
+## Validation Steps
+- Ran full test suite: `.venv/bin/python -m pytest -q` (92 passed).
+- Ran Week 9 unit tests: `.venv/bin/python -m pytest -q tests/test_aggregation.py` (11 passed).
+- Ran Week 9 experiment: `.venv/bin/python experiments/week09_aggregation_compression.py` which wrote `reports/week09_aggregation_compression.csv` and `reports/figures/week09_aggregation_compression_tradeoff.png`.
+
+## Generated Artifacts
+- `reports/week09_aggregation_compression.csv`
+- `reports/figures/week09_aggregation_compression_tradeoff.png`
+
+## Results
+- Unit tests: `tests/test_aggregation.py` passed (11 passed). Full test suite also passed.
+- Experiment CSV shows sensible trade-off behaviour: increasing `delta_threshold` increases `communication_saving_ratio` and generally increases `mse` as expected. `tree_aggregation` reduces transmitted bytes versus raw forwarding.
+
+## Known Limitations
+- Aggregation is analytic and counts link transmissions rather than simulating per-packet scheduling, collisions, or retransmissions; energy accounting is approximate (per-byte packet sizes used).
+- Delta suppression is node-local and assumes reliable delivery of transmitted updates; it does not model packet loss or reconstruction re-synchronization under loss.
+- No separate mini-report file was found; only the experiment CSV, figure, README entry, and tests are present.
+
+## Final Decision
+Week 9 (Data Aggregation and Compression) is implemented correctly and comprehensively. The module, tests, and experiment exist and are validated by the test suite and the experiment outputs. The analytic counting approach is appropriate for the Week 9 scope; further integration with packet-level reliability/energy models can be considered in future work.
+
+

@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-8: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-9: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -36,6 +36,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `routing.py`: Week 6 flooding and BFS sink-tree routing baselines with PDR, latency, hop-count, duplicate, overhead, and energy-per-bit metrics.
         -   `reliability.py`: Week 7 link-level ACK/retry ARQ model with deterministic backoff, ACK timeout handling, latency, PDR, retry, and energy metrics.
         -   `sync_localization.py`: Week 8 node clock drift, simple offset synchronization, RSSI-to-distance conversion, and least-squares 2D trilateration.
+        -   `aggregation.py`: Week 9 raw forwarding, tree aggregation, delta suppression, compression accounting, and reconstruction/aggregation error metrics.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -44,6 +45,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `test_core.py`: Comprehensive tests for the core simulation engine (`Scheduler`, `SimClock`, `TraceLogger`) and `RNG` and basic `metrics`.
     -   `test_channel.py`: Channel tests for distance trends, probability bounds, reproducibility, validation, and manual PRR points.
     -   `test_energy.py`: Energy tests for unit-consistent consumption, depletion clamp, validation, lifetime trends, and scheduler integration.
+    -   `test_aggregation.py`: Week 9 tests for aggregation functions, raw/tree communication cost, delta suppression, error metrics, compression formulas, and deterministic synthetic readings.
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
@@ -54,6 +56,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week06_routing_compare.py`: Generates Week 6 flooding-vs-sink-tree routing comparison outputs.
     -   `week07_reliability_arq.py`: Generates Week 7 retry-limit ARQ trade-off outputs.
     -   `week08_sync_localization.py`: Generates Week 8 localization error and clock drift outputs.
+    -   `week09_aggregation_compression.py`: Generates Week 9 raw/tree/delta aggregation and compression trade-off outputs.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.

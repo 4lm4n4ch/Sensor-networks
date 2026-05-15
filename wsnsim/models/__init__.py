@@ -1,5 +1,17 @@
 """Models for channels, energy, MAC, routing, sync, security, etc."""
 
+from .aggregation import (
+    AggregationConfig,
+    AggregationResult,
+    SensorReading,
+    aggregate_values,
+    calculate_error,
+    communication_metrics,
+    delta_suppression,
+    generate_synthetic_readings,
+    raw_forwarding,
+    tree_aggregation,
+)
 from .channel import Channel, ChannelConfig, LogDistanceChannel
 from .energy import (
     Battery,
@@ -61,6 +73,8 @@ from .topology import Node, Topology, TopologyConfig
 
 __all__ = [
     "AlohaMAC",
+    "AggregationConfig",
+    "AggregationResult",
     "AnchorNode",
     "Battery",
     "Channel",
@@ -98,18 +112,26 @@ __all__ = [
     "NodeClock",
     "RSSILocalizationConfig",
     "RSSIMeasurement",
+    "SensorReading",
     "TimeSyncResult",
     "Topology",
     "TopologyConfig",
     "Transmission",
     "TransmissionAttempt",
     "UnknownNode",
+    "aggregate_values",
+    "calculate_error",
+    "communication_metrics",
+    "delta_suppression",
     "distance_between_anchor_and_unknown",
     "distance_between_points",
     "distance_from_rssi",
     "generate_rssi_measurements",
+    "generate_synthetic_readings",
     "localize_from_measurements",
+    "raw_forwarding",
     "rssi_from_distance",
     "trilaterate_2d",
+    "tree_aggregation",
     "transmission_intervals_overlap",
 ]
