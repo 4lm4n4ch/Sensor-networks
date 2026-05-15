@@ -1,4 +1,4 @@
-"""Models for channels, energy, MAC, routing, sync, security, etc."""
+"""Models for channels, energy, MAC, routing, sync, security, edge AI, etc."""
 
 from .aggregation import (
     AggregationConfig,
@@ -13,6 +13,17 @@ from .aggregation import (
     tree_aggregation,
 )
 from .channel import Channel, ChannelConfig, LogDistanceChannel
+from .edge_ai import (
+    DetectionResult,
+    DetectorConfig,
+    EdgeAIMetrics,
+    SensorSample,
+    SignalGeneratorConfig,
+    calculate_edge_ai_metrics,
+    detect_sample_zscore,
+    detect_samples,
+    generate_sensor_samples,
+)
 from .energy import (
     Battery,
     DutyCycleConfig,
@@ -89,7 +100,10 @@ __all__ = [
     "ClockConfig",
     "CollisionDomain",
     "CSMAMAC",
+    "DetectionResult",
+    "DetectorConfig",
     "DutyCycleConfig",
+    "EdgeAIMetrics",
     "EnergyModel",
     "EnergyState",
     "FloodingRouting",
@@ -118,7 +132,9 @@ __all__ = [
     "SecurityDecision",
     "SecurityLayer",
     "SecurityMetrics",
+    "SensorSample",
     "SinkTreeRouting",
+    "SignalGeneratorConfig",
     "LocalizationError",
     "LocalizationResult",
     "NodeClock",
@@ -133,12 +149,16 @@ __all__ = [
     "UnknownNode",
     "aggregate_values",
     "calculate_error",
+    "calculate_edge_ai_metrics",
     "communication_metrics",
+    "detect_sample_zscore",
+    "detect_samples",
     "delta_suppression",
     "distance_between_anchor_and_unknown",
     "distance_between_points",
     "distance_from_rssi",
     "generate_rssi_measurements",
+    "generate_sensor_samples",
     "generate_synthetic_readings",
     "localize_from_measurements",
     "raw_forwarding",

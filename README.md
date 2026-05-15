@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-10: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, replay-protection security overhead modeling, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-11: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, replay-protection security overhead modeling, edge AI anomaly detection, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -38,6 +38,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `sync_localization.py`: Week 8 node clock drift, simple offset synchronization, RSSI-to-distance conversion, and least-squares 2D trilateration.
         -   `aggregation.py`: Week 9 raw forwarding, tree aggregation, delta suppression, compression accounting, and reconstruction/aggregation error metrics.
         -   `security.py`: Week 10 replay protection, simulated authentication metadata, and CPU/latency/byte overhead accounting.
+        -   `edge_ai.py`: Week 11 deterministic sensor-signal generation, streaming z-score/EWMA anomaly detection, edge communication saving, and FP/FN detection metrics.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -48,6 +49,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `test_energy.py`: Energy tests for unit-consistent consumption, depletion clamp, validation, lifetime trends, and scheduler integration.
     -   `test_aggregation.py`: Week 9 tests for aggregation functions, raw/tree communication cost, delta suppression, error metrics, compression formulas, and deterministic synthetic readings.
     -   `test_security.py`: Week 10 tests for sequence-number replay protection, overhead accounting, deterministic metadata, and abuse-case rejection.
+    -   `test_edge_ai.py`: Week 11 tests for deterministic signal generation, anomaly labels, z-score detection, confusion-matrix metrics, communication saving, threshold trade-offs, and divide-by-zero robustness.
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
@@ -60,6 +62,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week08_sync_localization.py`: Generates Week 8 localization error and clock drift outputs.
     -   `week09_aggregation_compression.py`: Generates Week 9 raw/tree/delta aggregation and compression trade-off outputs.
     -   `week10_security_overhead.py`: Generates Week 10 baseline-vs-secured replay attack and overhead outputs.
+    -   `week11_edge_ai_detector.py`: Generates Week 11 edge anomaly detection threshold-sweep CSV, figures, and report.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -798,6 +801,94 @@ Expected interpretation: the grouped replay-abuse figure makes the comparison ex
 
 The model does not provide encryption, real MAC verification, key exchange, node capture handling, physical-layer jamming simulation, sinkhole/Sybil routing defenses, or out-of-order sliding-window replay handling. It is intentionally a small, deterministic security accounting layer that prepares the simulator for the M3 Security focus by making replay abuse and protection costs measurable.
 
+## Week 11: Edge AI in WSN
+
+Week 11 adds `wsnsim.models.edge_ai`, a deterministic edge anomaly-detection layer for sensor readings. The goal is to measure how much communication can be saved when nodes transmit only anomaly events instead of forwarding every raw sample, while explicitly tracking false positives, false negatives, and detection quality.
+
+### Edge AI Motivation
+
+WSN nodes are often energy- and bandwidth-constrained. If a node can run a small local detector, it can suppress routine readings and transmit only events that look anomalous. This reduces packet load, but the threshold must be chosen carefully: a lower threshold catches more anomalies and creates more false alarms, while a higher threshold saves more communication and can miss weaker events.
+
+### Signal Generator
+
+`SignalGeneratorConfig` controls a local `numpy.random.default_rng(seed)` signal generator:
+
+-   `n_nodes` and `n_timesteps` define the sample grid.
+-   `baseline_mean` and `baseline_std` define normal Gaussian readings with a small smooth temporal and spatial component.
+-   `anomaly_probability` injects labeled anomaly events.
+-   `anomaly_magnitude` adds a deterministic-size spike to anomalous samples.
+
+Each generated `SensorSample` stores `node_id`, `timestamp_s`, `value`, and `is_anomaly`, so the detector can be evaluated against ground truth.
+
+### Detector
+
+The main Week 11 detector is a streaming per-node z-score detector. Each node compares the current sample against its recent rolling history:
+
+```text
+score = abs(value - mean(history)) / std(history)
+predicted_anomaly = score > threshold
+```
+
+The module also includes a simple EWMA mode for future comparisons. Warm-up samples without enough history are treated as normal. If a metric denominator is empty, the module returns `0.0` instead of raising or producing NaN.
+
+### Communication-Saving Model
+
+Baseline mode transmits every sample:
+
+```text
+baseline_packets = n_nodes * n_timesteps
+```
+
+Edge AI mode transmits only samples classified as anomalies:
+
+```text
+transmitted_packets = predicted_anomaly_count
+communication_saving_ratio = 1 - transmitted_packets / baseline_packets
+```
+
+The experiment also reports an optional first-order `energy_saved_j` estimate using a fixed packet-energy cost.
+
+### FP/FN Trade-Off
+
+The Week 11 threshold sweep records TP, FP, TN, FN, precision, recall, F1, false-positive rate, and false-negative rate. In the default scenario, increasing the z-score threshold raises communication saving because fewer packets are sent, lowers false positives, and increases false negatives. This makes the detector threshold a direct knob for the M3 Edge AI trade-off between network lifetime and missed-event risk.
+
+### Running Week 11 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_edge_ai.py
+```
+
+### Running The Edge AI Experiment
+
+```bash
+.venv/bin/python experiments/week11_edge_ai_detector.py
+```
+
+The experiment uses seed `2026`, `25` nodes, `200` timesteps, anomaly probability `0.05`, and thresholds:
+
+```text
+1.5, 2.0, 2.5, 3.0, 3.5
+```
+
+Outputs are saved to:
+
+```text
+reports/week11_edge_ai_detector.csv
+reports/week11_edge_ai_report.md
+reports/figures/week11_comm_saving_vs_threshold.png
+reports/figures/week11_fp_fn_vs_threshold.png
+reports/figures/week11_comm_vs_detection_tradeoff.png
+reports/figures/week11_signal_detection_example.png
+```
+
+### M3 Support
+
+This module can support an M3 Edge AI focus by providing a reproducible anomaly-detection pipeline, detector-quality metrics, and communication/energy trade-off plots. It can also combine naturally with the Week 10 security focus: anomaly events can be secured with replay protection, letting M3 compare Security + AI costs against communication savings.
+
+### Week 11 Limitations
+
+The detector is intentionally lightweight. It does not train a learned model, adapt thresholds automatically, model concept drift, compress event payloads, account for CPU inference energy, or simulate adversarial examples. The synthetic anomalies are additive spikes, so future work could add gradual drifts, stuck-at faults, spatially correlated events, and integration with routing/MAC/energy state traces.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -837,7 +928,7 @@ To set up and run `wsnsim`, follow these steps:
 
 `wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements; and Week 10 security behavior including replay rejection, independent sender sequence tracking, overhead formulas, metrics, and disabled-security baseline behavior.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements; Week 10 security behavior including replay rejection, independent sender sequence tracking, overhead formulas, metrics, and disabled-security baseline behavior; and Week 11 edge AI behavior including deterministic signals, ground-truth anomaly labels, z-score detection, FP/FN metrics, communication saving, threshold trade-offs, and divide-by-zero-safe metric formulas.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 

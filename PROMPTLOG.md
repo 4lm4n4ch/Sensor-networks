@@ -884,3 +884,68 @@ Improve the Week 10 security experiment figures so they clearly communicate the 
 
 ## Status
 Week 10 experiment figures and README interpretation improved for clearer scientific communication.
+
+
+---
+
+Date: 2026-05-15
+
+## Week 11 Goal
+Implement Edge AI in `wsnsim`: a deterministic edge anomaly detector for WSN sensor readings, with communication-saving analysis, FP/FN detection metrics, optional energy-saving accounting, experiment outputs, figures, tests, mini report, and README documentation.
+
+## Context / Files Touched
+- Added `wsnsim/models/edge_ai.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_edge_ai.py`.
+- Added `experiments/week11_edge_ai_detector.py`.
+- Generated `reports/week11_edge_ai_detector.csv`.
+- Generated `reports/week11_edge_ai_report.md`.
+- Generated Week 11 figures under `reports/figures/`.
+- Updated `README.md`.
+
+## Prompt Summary
+- Add an Edge AI module for WSN sensor anomaly detection.
+- Implement `SensorSample`, `SignalGeneratorConfig`, `DetectorConfig`, `DetectionResult`, and `EdgeAIMetrics`.
+- Generate deterministic synthetic sensor signals with `numpy.random.default_rng(seed)` and labeled injected anomalies.
+- Implement a simple z-score threshold detector, with optional EWMA support.
+- Model baseline communication as every sample transmitted and Edge AI communication as only predicted anomalies transmitted.
+- Compute TP, FP, TN, FN, precision, recall, F1, false-positive rate, false-negative rate, transmitted packets, baseline packets, communication saving ratio, and optional `energy_saved_j`.
+- Add tests for deterministic generation, anomaly labels, clear anomaly detection, normal-value rejection, confusion matrix correctness, metric formulas, communication saving, threshold trade-off behavior, and divide-by-zero robustness.
+- Add a Week 11 threshold sweep using seed `2026`, `25` nodes, `200` timesteps, anomaly probability `0.05`, and thresholds `[1.5, 2.0, 2.5, 3.0, 3.5]`.
+
+## Accepted Suggestions
+- Kept the Week 11 detector lightweight and deterministic instead of adding a trained ML model.
+- Used a rolling per-node z-score detector as the required simple edge detector.
+- Added EWMA support as a small optional extension.
+- Treated warm-up samples without enough history as normal.
+- Returned `0.0` for undefined precision/recall-style metrics when denominators are empty.
+- Added a simple fixed packet-energy estimate for optional energy saving.
+
+## Generated Artifacts
+- `reports/week11_edge_ai_detector.csv`
+- `reports/week11_edge_ai_report.md`
+- `reports/figures/week11_comm_saving_vs_threshold.png`
+- `reports/figures/week11_fp_fn_vs_threshold.png`
+- `reports/figures/week11_comm_vs_detection_tradeoff.png`
+- `reports/figures/week11_signal_detection_example.png`
+
+## Results
+- Higher detector thresholds transmit fewer anomaly events and increase communication saving.
+- False-positive rate decreases as the threshold increases.
+- False-negative rate increases as the threshold increases, showing the intended detection-vs-communication trade-off.
+- In the generated default run, threshold `2.5` gave the best F1 score, while threshold `3.5` gave the highest communication saving.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_edge_ai.py`.
+- Ran `.venv/bin/python -m pytest -q`.
+- Ran `.venv/bin/python experiments/week11_edge_ai_detector.py`.
+- Inspected the generated Week 11 CSV and mini report.
+
+## Known Limitations
+- The detector is a lightweight analytic model, not a trained ML model.
+- CPU inference energy is not modeled separately.
+- Synthetic anomalies are additive spikes rather than gradual drifts, stuck-at faults, or spatially correlated events.
+- The experiment does not yet integrate packet-level MAC, routing, security, or radio-channel effects.
+
+## Status
+Week 11 Edge AI module, tests, experiment, CSV, figures, mini report, README documentation, and prompt log entry added.
