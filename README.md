@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-12: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, replay-protection security overhead modeling, edge AI anomaly detection, Federated Learning communication-cost modeling, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-13: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, replay-protection security overhead modeling, edge AI anomaly detection, Federated Learning communication-cost modeling, design-space optimization with Pareto-front selection, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -40,6 +40,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `security.py`: Week 10 replay protection, simulated authentication metadata, and CPU/latency/byte overhead accounting.
         -   `edge_ai.py`: Week 11 deterministic sensor-signal generation, streaming z-score/EWMA anomaly detection, edge communication saving, and FP/FN detection metrics.
         -   `federated.py`: Week 12 deterministic FedAvg-style FL simulation with local model updates, server aggregation, communication byte accounting, centralized raw-upload baseline, and convergence proxies.
+        -   `optimization.py`: Week 13 generic design-space utilities for objectives, design points, grid search, dominance checks, Pareto-front extraction, normalized scoring, and candidate ranking.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -52,6 +53,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `test_security.py`: Week 10 tests for sequence-number replay protection, overhead accounting, deterministic metadata, and abuse-case rejection.
     -   `test_edge_ai.py`: Week 11 tests for deterministic signal generation, anomaly labels, z-score detection, confusion-matrix metrics, communication saving, threshold trade-offs, and divide-by-zero robustness.
     -   `test_federated.py`: Week 12 tests for FedAvg correctness, communication-cost scaling, deterministic seeds, FL-vs-centralized byte savings, and toy convergence trends.
+    -   `test_optimization.py`: Week 13 tests for maximize/minimize objective directions, dominance, trade-off preservation, Pareto-front extraction, deterministic grid search, and full combination coverage.
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
@@ -66,6 +68,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week10_security_overhead.py`: Generates Week 10 baseline-vs-secured replay attack and overhead outputs.
     -   `week11_edge_ai_detector.py`: Generates Week 11 edge anomaly detection threshold-sweep CSV, figures, and report.
     -   `week12_federated_learning.py`: Generates Week 12 FL update-period sweep CSV, communication/convergence figures, and report.
+    -   `week13_design_space_optimization.py`: Generates Week 13 design-space sweep CSV, Pareto figures, and report.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -977,6 +980,64 @@ Expected interpretation: FL can save communication when compact model updates ov
 
 The FL model is a toy numeric FedAvg simulation. It does not train a neural network, provide a privacy guarantee, model secure aggregation, simulate wireless contention or routing hops, or account for packet loss. It is intended as a course-appropriate communication-cost baseline that can later be integrated with the channel, MAC, routing, energy, and security modules.
 
+## Week 13: Design Space and Optimization
+
+Week 13 adds `wsnsim.models.optimization`, a small deterministic optimization helper module for WSN design-space exploration. It is intentionally not an advanced optimizer. The goal is to evaluate a configurable grid of WSN designs, collect multiple metrics, and identify Pareto-efficient configurations.
+
+### Optimization Model
+
+The main API is:
+
+-   `Objective`: metric name plus `maximize` or `minimize` direction.
+-   `DesignPoint`: one candidate configuration and its `config_id`.
+-   `OptimizationResult`: metrics produced for one design point.
+-   `dominates(a, b, objectives)`: Pareto dominance check with objective directions.
+-   `pareto_front(results, objectives)`: non-dominated subset extraction.
+-   `grid_search(parameter_grid, evaluator)`: deterministic Cartesian sweep.
+-   `normalize_objectives(...)` and `rank_pareto_candidates(...)`: balanced recommendation helpers.
+
+### Week 13 Experiment
+
+`experiments/week13_design_space_optimization.py` sweeps:
+
+-   deterministic seed,
+-   node count,
+-   MAC type (`aloha` or `csma`),
+-   retry limit,
+-   radio range,
+-   aggregation threshold,
+-   security enabled/disabled.
+
+The evaluator is a documented analytic WSN proxy: Week 2 channel PRR is used for link quality, retry behavior follows the Week 7 attempt model, aggregation reduces generated packets, and Week 10 security settings add bytes, CPU energy, and latency. The objectives are to maximize PDR while minimizing energy per delivered packet, latency, and total transmitted bytes.
+
+### Running Week 13 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_optimization.py
+```
+
+### Running The Design-Space Experiment
+
+```bash
+.venv/bin/python experiments/week13_design_space_optimization.py
+```
+
+Outputs are saved to:
+
+```text
+reports/week13_design_space_optimization.csv
+reports/week13_design_space_report.md
+reports/figures/week13_pareto_energy_vs_pdr.png
+reports/figures/week13_pareto_latency_vs_energy.png
+reports/figures/week13_design_space_scatter.png
+```
+
+Current generated results evaluate 288 configurations and identify 26 Pareto-efficient configurations. The balanced recommendation is `cfg_047`, a CSMA design with retry limit `0`, radio range `55.0` m, aggregation threshold `0.35`, and security disabled; it has PDR `0.958`, mean latency `0.0137` s, and energy per delivered packet `0.000217` J in the simplified evaluator.
+
+### Week 13 Limitations
+
+The design-space grid is small, the evaluator is analytic rather than a full end-to-end packet simulation, stochastic repetition is limited to two deterministic seeds, and no deployment calibration or advanced optimizer is included.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -1016,7 +1077,7 @@ To set up and run `wsnsim`, follow these steps:
 
 `wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements; Week 10 security behavior including replay rejection, independent sender sequence tracking, overhead formulas, metrics, and disabled-security baseline behavior; Week 11 edge AI behavior including deterministic signals, ground-truth anomaly labels, z-score detection, FP/FN metrics, communication saving, threshold trade-offs, and divide-by-zero-safe metric formulas; and Week 12 FL behavior including FedAvg correctness, communication-cost scaling, deterministic seeds, FL-vs-centralized byte savings, and toy convergence trends.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements; Week 10 security behavior including replay rejection, independent sender sequence tracking, overhead formulas, metrics, and disabled-security baseline behavior; Week 11 edge AI behavior including deterministic signals, ground-truth anomaly labels, z-score detection, FP/FN metrics, communication saving, threshold trade-offs, and divide-by-zero-safe metric formulas; Week 12 FL behavior including FedAvg correctness, communication-cost scaling, deterministic seeds, FL-vs-centralized byte savings, and toy convergence trends; and Week 13 optimization behavior including Pareto dominance, objective direction handling, trade-off preservation, front extraction, grid-search coverage, and deterministic seeded evaluation.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 
