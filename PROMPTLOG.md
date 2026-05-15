@@ -1037,3 +1037,61 @@ Prepare the `wsnsim` repository for Week 12 submission by adding a deterministic
 
 ## Status
 Week 12 Federated Learning module, tests, experiment, CSV, figures, report, README documentation, and prompt log entry added.
+
+
+---
+
+Date: 2026-05-15
+
+## Week 13 Goal
+Prepare the `wsnsim` repository for Week 13 submission by adding a simple Design Space Exploration and Optimization workflow for WSN design trade-offs.
+
+## Context / Files Touched
+- Added `wsnsim/models/optimization.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_optimization.py`.
+- Added `experiments/week13_design_space_optimization.py`.
+- Generated `reports/week13_design_space_optimization.csv`.
+- Generated `reports/week13_design_space_report.md`.
+- Generated Week 13 figures under `reports/figures/`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+
+## Prompt Summary
+- Inspect source modules, tests, experiments, reports, figures, README, PROMPTLOG, and Git status.
+- Verify or implement Week 13 optimization support: objectives, design points, structured results, grid search, objective direction handling, Pareto dominance, Pareto-front extraction, normalized ranking, CSV export, and reproducible figures.
+- Sweep at least two configurable dimensions and collect multiple objectives.
+- Generate a short design-space report with results, interpretation, reproducibility commands, and limitations.
+
+## Accepted Suggestions
+- Kept the optimizer generic and lightweight instead of adding a heavy optimization dependency.
+- Used a deterministic Cartesian grid over seed, node count, MAC, retry limit, radio range, aggregation threshold, and security enabled/disabled.
+- Used an analytic WSN evaluator that reuses existing project assumptions where practical: Week 2 channel PRR, Week 7 retry-attempt logic, Week 9 aggregation-style traffic reduction, and Week 10 security overhead.
+- Ranked Pareto candidates with normalized objective scores to provide one balanced recommendation.
+
+## Generated Artifacts
+- `reports/week13_design_space_optimization.csv`
+- `reports/week13_design_space_report.md`
+- `reports/figures/week13_pareto_energy_vs_pdr.png`
+- `reports/figures/week13_pareto_latency_vs_energy.png`
+- `reports/figures/week13_design_space_scatter.png`
+
+## Result Evidence
+- Evaluated `288` configurations.
+- Identified `26` Pareto-efficient configurations.
+- Recommended `cfg_047`: CSMA, retry limit `0`, radio range `55.0` m, aggregation threshold `0.35`, security disabled.
+- Recommended metrics: PDR `0.958`, energy per delivered packet `0.000217` J, latency `0.0137` s.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_optimization.py`.
+- Ran `.venv/bin/python -m pytest -q`.
+- Ran `.venv/bin/python experiments/week13_design_space_optimization.py`.
+
+## Known Limitations
+- The parameter grid is intentionally small.
+- The evaluator is analytic and simplified rather than a full packet-level end-to-end WSN simulation.
+- Stochastic repetition is limited to two deterministic seeds.
+- No advanced optimizer, deployment calibration, or real hardware validation is included.
+
+## Status
+Week 13 optimization module, tests, experiment, CSV, figures, report, README documentation, and prompt log entry added.
