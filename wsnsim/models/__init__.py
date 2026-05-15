@@ -51,6 +51,13 @@ from .routing import (
     RoutingPacket,
     SinkTreeRouting,
 )
+from .security import (
+    SecurePacketMetadata,
+    SecurityConfig,
+    SecurityDecision,
+    SecurityLayer,
+    SecurityMetrics,
+)
 from .sync_localization import (
     AnchorNode,
     ClockConfig,
@@ -106,6 +113,11 @@ __all__ = [
     "RoutingConfig",
     "RoutingMetrics",
     "RoutingPacket",
+    "SecurePacketMetadata",
+    "SecurityConfig",
+    "SecurityDecision",
+    "SecurityLayer",
+    "SecurityMetrics",
     "SinkTreeRouting",
     "LocalizationError",
     "LocalizationResult",

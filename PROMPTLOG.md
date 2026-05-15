@@ -757,3 +757,130 @@ Implement data aggregation and lightweight compression for `wsnsim`, including r
 Week 9 (Data Aggregation and Compression) is implemented correctly and comprehensively. The module, tests, and experiment exist and are validated by the test suite and the experiment outputs. The analytic counting approach is appropriate for the Week 9 scope; further integration with packet-level reliability/energy models can be considered in future work.
 
 
+---
+
+Date: 2026-05-15
+
+## Week 10 Goal
+Refine the Week 10 security experiment visuals so replay abuse, byte overhead, security ratio, and CPU cost are easier to interpret without changing the replay-protection model or its tests.
+
+## Context / Files Touched
+- Updated `experiments/week10_security_overhead.py` to improve the replay-abuse figure and clarify axis labels.
+- Updated `README.md` Week 10 wording to match the improved interpretation of the outputs.
+
+## Prompt Summary
+- Keep the existing replay-protection logic, threat checklist, CPU overhead accounting, and tests.
+- Improve the Week 10 figures so they clearly show that baseline accepts replay packets and replay protection rejects them.
+- Preserve the fixed 12 B/packet security overhead as a separate optional figure, but emphasize total transmitted bytes, security overhead ratio, and total CPU energy overhead as the main trade-off views.
+
+## Validation Steps
+- Ran `.venv/bin/python experiments/week10_security_overhead.py`.
+- Inspected `reports/figures/week10_replay_accept_reject_vs_attack_rate.png` after regeneration.
+
+## Generated Artifacts
+- `reports/week10_security_overhead.csv`
+- `reports/figures/week10_replay_accept_reject_vs_attack_rate.png`
+- `reports/figures/week10_total_transmitted_bytes.png`
+- `reports/figures/week10_security_overhead_ratio.png`
+- `reports/figures/week10_security_cpu_energy.png`
+- `reports/figures/week10_security_overhead_bytes_per_packet.png`
+
+## Results
+- The replay-abuse figure now uses grouped bars, which makes the baseline acceptance vs replay-protection rejection comparison easier to read.
+- The total-bytes, overhead-ratio, and CPU-energy plots remain consistent with the model and clearly show the fixed metadata cost and the per-packet verification cost.
+
+## Known Limitations
+- The security layer is still a deterministic accounting model rather than real cryptography.
+- The replay-abuse experiment is intentionally synthetic and does not model packet loss, key management, or wireless channel effects.
+
+## Final Decision
+Week 10 security figures are now clearer and better aligned with the intended interpretation of replay attack handling and overhead trade-offs.
+
+Date: 2026-05-15
+
+## Week 10 Goal
+Implement a basic WSN security module for `wsnsim`, including threat checklist documentation, deterministic replay protection, security overhead accounting, abuse-case tests, and an overhead experiment for M3 Security preparation.
+
+## Context / Files Touched
+- Replaced `wsnsim/models/security.py` placeholder with `SecurityConfig`, `SecurePacketMetadata`, `SecurityDecision`, `SecurityMetrics`, and `SecurityLayer`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_security.py`.
+- Added `experiments/week10_security_overhead.py`.
+- Added `reports/week10_threat_checklist.md`.
+- Updated `README.md`.
+
+## Prompt Summary
+- Implement strict replay protection using a per-`(sender_id, receiver_id)` sequence high-water mark.
+- Reject duplicate and old sequence numbers while accepting increasing sequence numbers.
+- Simulate security metadata overhead using nonce bytes and authentication-tag bytes.
+- Track per-packet and cumulative overhead bytes, CPU energy, and latency overhead.
+- Include disabled-security baseline behavior with zero overhead.
+- Build an abuse-case test where a legitimate packet is accepted and replaying the same packet is rejected.
+- Add an experiment sweeping replay attack rates `[0.0, 0.05, 0.1, 0.2, 0.4]` for baseline versus replay protection.
+
+## Accepted Suggestions
+- Kept authentication simulated rather than implementing real cryptography.
+- Used strict in-order replay checks for deterministic Week 10 behavior.
+- Preserved `sequence_window` as a documented future extension point for sliding-window replay protection.
+- Used deterministic RNG bytes for nonce generation with the configured seed.
+- Counted replayed attack packets as receiver verification cost without new legitimate sender authentication-generation cost in the experiment.
+
+## Rejected Suggestions
+- Rejected real encryption, key exchange, node-capture modeling, and cryptographic MAC verification for this week.
+- Rejected out-of-order sequence acceptance because it complicates the abuse-case baseline and belongs in a future sliding-window model.
+- Rejected folding replay behavior into routing or MAC modules; Week 10 remains a separate security layer.
+
+## Generated Artifacts
+- `reports/week10_threat_checklist.md`
+- `reports/week10_security_overhead.csv`
+- `reports/figures/week10_replay_rejection_vs_attack_rate.png`
+- `reports/figures/week10_security_overhead_bytes.png`
+- `reports/figures/week10_security_cpu_energy.png`
+
+## Known Limitations
+- Security is modeled analytically and does not implement real cryptography or encryption.
+- Strict sequence checks reject out-of-order packets.
+- Jamming, sinkhole, Sybil, spoofing defenses, key management, and packet-level route integration are future M3 extensions.
+
+## Status
+Week 10 security module, tests, experiment, threat checklist, README documentation, and prompt log entry added.
+
+
+---
+
+Date: 2026-05-15
+
+## Week 10 Figure Improvement Goal
+Improve the Week 10 security experiment figures so they clearly communicate the replay-security trade-off: baseline accepts replayed packets, replay protection rejects replayed packets, and the protected mode pays byte and CPU overhead.
+
+## Context / Files Touched
+- Updated `experiments/week10_security_overhead.py`.
+- Regenerated `reports/week10_security_overhead.csv`.
+- Regenerated Week 10 figures under `reports/figures/`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+
+## Prompt Summary
+- Preserve the Week 10 setup: seed `2026`, `1000` legitimate packets, `64 B` payloads, `8 B` auth tags, `4 B` nonces, and replay rates `[0.0, 0.05, 0.1, 0.2, 0.4]`.
+- Add CSV fields for `mode`, `security_overhead_bytes_per_packet`, `legitimate_packets`, `replay_packets`, `replay_accepted`, `total_payload_bytes`, `total_security_overhead_bytes`, `cpu_energy_j_per_packet`, and latency-per-packet metrics.
+- Replace the ambiguous replay-rejection-only figure with a replay accepted/rejected figure.
+- Replace the flat primary bytes-per-packet overhead figure with total transmitted bytes and overhead ratio figures.
+- Keep the fixed bytes-per-packet figure as an optional diagnostic with a clear title.
+- Clarify that baseline rejecting zero replay packets means replay packets are accepted, not blocked.
+
+## Generated Artifacts
+- `reports/week10_security_overhead.csv`
+- `reports/figures/week10_replay_accept_reject_vs_attack_rate.png`
+- `reports/figures/week10_total_transmitted_bytes.png`
+- `reports/figures/week10_security_overhead_ratio.png`
+- `reports/figures/week10_security_cpu_energy.png`
+- `reports/figures/week10_security_overhead_bytes_per_packet.png`
+
+## Results
+- Baseline mode records increasing `replay_accepted` as attack rate increases.
+- Replay-protection mode records matching `replay_rejected` counts and zero replay acceptance.
+- Security overhead remains `12 B/packet` for the protected mode because nonce and auth-tag sizes are fixed.
+- Total transmitted bytes and CPU security overhead increase with replay traffic in the protected mode.
+
+## Status
+Week 10 experiment figures and README interpretation improved for clearer scientific communication.

@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-9: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-10: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, data aggregation/compression, replay-protection security overhead modeling, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -37,6 +37,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `reliability.py`: Week 7 link-level ACK/retry ARQ model with deterministic backoff, ACK timeout handling, latency, PDR, retry, and energy metrics.
         -   `sync_localization.py`: Week 8 node clock drift, simple offset synchronization, RSSI-to-distance conversion, and least-squares 2D trilateration.
         -   `aggregation.py`: Week 9 raw forwarding, tree aggregation, delta suppression, compression accounting, and reconstruction/aggregation error metrics.
+        -   `security.py`: Week 10 replay protection, simulated authentication metadata, and CPU/latency/byte overhead accounting.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -46,6 +47,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `test_channel.py`: Channel tests for distance trends, probability bounds, reproducibility, validation, and manual PRR points.
     -   `test_energy.py`: Energy tests for unit-consistent consumption, depletion clamp, validation, lifetime trends, and scheduler integration.
     -   `test_aggregation.py`: Week 9 tests for aggregation functions, raw/tree communication cost, delta suppression, error metrics, compression formulas, and deterministic synthetic readings.
+    -   `test_security.py`: Week 10 tests for sequence-number replay protection, overhead accounting, deterministic metadata, and abuse-case rejection.
 -   `experiments/`: Contains example simulations and scripts to run various experiments.
     -   `hello_simulation.py`: A basic "hello world" example demonstrating how to set up and run a simple simulation using `wsnsim` v0.
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
@@ -57,6 +59,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week07_reliability_arq.py`: Generates Week 7 retry-limit ARQ trade-off outputs.
     -   `week08_sync_localization.py`: Generates Week 8 localization error and clock drift outputs.
     -   `week09_aggregation_compression.py`: Generates Week 9 raw/tree/delta aggregation and compression trade-off outputs.
+    -   `week10_security_overhead.py`: Generates Week 10 baseline-vs-secured replay attack and overhead outputs.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -707,6 +710,94 @@ Expected interpretation: localization error is near zero at `sigma = 0 dB` and t
 
 The localization model assumes a known transmit power and path-loss exponent, independent RSSI noise per anchor, static anchors, and 2D geometry. It does not model NLOS bias, multipath correlation, anchor uncertainty, mobile nodes, robust outlier rejection, covariance estimates, or packet-level MAC/routing effects during ranging.
 
+## Week 10: Security in WSN
+
+Week 10 adds `wsnsim.models.security`, a basic security layer for M3 preparation. It models replay protection with sequence numbers, simulated nonce/authentication metadata, and explicit security overhead in bytes, CPU energy, and processing latency. It does not implement real cryptography; authentication is represented by configurable metadata and per-byte processing costs.
+
+### Security Model
+
+-   `SecurityConfig`: enables/disables the layer, controls replay protection, `auth_tag_bytes`, `nonce_bytes`, sequence-window placeholder, CPU generation cost, verification cost, latency cost, and RNG seed.
+-   `SecurePacketMetadata`: sender id, receiver id, sequence number, nonce, auth-tag length, and optional timestamp.
+-   `SecurityDecision`: accepted/rejected result with reason, overhead bytes, CPU energy, and latency overhead.
+-   `SecurityMetrics`: cumulative checked, accepted, rejected, replay-rejected, byte-overhead, CPU-energy, and latency counters.
+-   `SecurityLayer`: deterministic metadata generation, replay checks, and metric accounting.
+
+Replay protection uses a strict high-water mark per `(sender_id, receiver_id)` flow. A packet is accepted only if its sequence number is greater than the last accepted sequence number for that flow. Duplicate or old sequence numbers are rejected as replay attempts. `sequence_window` is reserved for future sliding-window behavior; Week 10 keeps strict in-order checks so the abuse case is easy to audit.
+
+The baseline mode intentionally has replay protection disabled. Therefore, `replay_rejected = 0` in baseline does not mean the baseline is safer; it means replayed packets are accepted and passed upward. The experiment CSV records both `replay_accepted` and `replay_rejected` so this distinction is explicit.
+
+### Overhead Assumptions
+
+Secured packets add a fixed nonce plus authentication-tag cost:
+
+```text
+security_overhead_bytes_per_packet = nonce_bytes + auth_tag_bytes
+```
+
+With the Week 10 experiment defaults, this is `4 B + 8 B = 12 B/packet`. Because that per-packet cost is fixed, an overhead-bytes-per-packet plot is flat by design. The main byte-cost figures therefore use total transmitted bytes and the security overhead ratio:
+
+```text
+security_overhead_ratio = total_security_overhead_bytes / total_transmitted_bytes
+```
+
+CPU overhead is simulated as per-byte authentication generation plus verification:
+
+```text
+processed_bytes = payload_bytes + security_overhead_bytes
+cpu_energy_j = processed_bytes * (cpu_cost_per_byte_j + verify_cost_per_byte_j)
+```
+
+For replayed packets in the experiment, the attacker retransmits old bytes, so the receiver still pays verification cost while the legitimate sender does not pay a new generation cost. Latency overhead is a configurable per-byte processing delay. The CPU figure reports total CPU security overhead in joules; baseline is zero because no simulated authentication or verification work is performed.
+
+### Threat Checklist
+
+The Week 10 threat checklist is saved at:
+
+```text
+reports/week10_threat_checklist.md
+```
+
+It covers assets, attacker model, attack surface, threats, mitigations, and residual risks, including replay attack, DoS/jamming, sinkhole, Sybil, spoofing, eavesdropping, and packet injection.
+
+### Abuse-Case Test
+
+`tests/test_security.py` includes a replay abuse case where a legitimate packet is accepted, the same metadata is replayed, and the replay is rejected with a replay reason. It also checks increasing sequence acceptance, duplicate and old sequence rejection, disabled-security behavior, byte/CPU overhead formulas, metrics, deterministic behavior, and independent sender tracking.
+
+### Running Week 10 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_security.py
+```
+
+### Running The Security Experiment
+
+```bash
+.venv/bin/python experiments/week10_security_overhead.py
+```
+
+The experiment compares baseline traffic without security against replay protection enabled using seed `2026`, `1000` legitimate packets, `64 B` payloads, `8 B` auth tags, `4 B` nonces, and replay attack rates:
+
+```text
+0.0, 0.05, 0.1, 0.2, 0.4
+```
+
+Outputs are saved to:
+
+```text
+reports/week10_security_overhead.csv
+reports/figures/week10_replay_accept_reject_vs_attack_rate.png
+reports/figures/week10_total_transmitted_bytes.png
+reports/figures/week10_security_overhead_ratio.png
+reports/figures/week10_security_cpu_energy.png
+reports/figures/week10_security_overhead_bytes_per_packet.png
+```
+
+Expected interpretation: the grouped replay-abuse figure makes the comparison explicit. Baseline accepts replayed packets as the attack rate increases, while replay protection rejects those duplicate/old sequence numbers. Replay protection transmits more total bytes because each packet carries the fixed 12 B security metadata. The overhead-ratio figure is positive and roughly stable because payload size and security metadata size are fixed, so the ratio is less informative than the total-bytes comparison but still documents the fixed per-packet cost. CPU security overhead is reported as total joules and is positive for replay protection, increasing as more replayed packets must be verified.
+
+### Week 10 Limitations
+
+The model does not provide encryption, real MAC verification, key exchange, node capture handling, physical-layer jamming simulation, sinkhole/Sybil routing defenses, or out-of-order sliding-window replay handling. It is intentionally a small, deterministic security accounting layer that prepares the simulator for the M3 Security focus by making replay abuse and protection costs measurable.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -746,7 +837,7 @@ To set up and run `wsnsim`, follow these steps:
 
 `wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; and Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements; and Week 10 security behavior including replay rejection, independent sender sequence tracking, overhead formulas, metrics, and disabled-security baseline behavior.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 
