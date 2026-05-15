@@ -19,6 +19,16 @@ from .mac import (
     Transmission,
     transmission_intervals_overlap,
 )
+from .routing import (
+    FloodingRouting,
+    RouteDecision,
+    RoutingAction,
+    RoutingConfig,
+    RoutingMetrics,
+    RoutingPacket,
+    SinkTreeRouting,
+)
+from .topology import Node, Topology, TopologyConfig
 
 __all__ = [
     "AlohaMAC",
@@ -30,12 +40,22 @@ __all__ = [
     "DutyCycleConfig",
     "EnergyModel",
     "EnergyState",
+    "FloodingRouting",
     "LifetimeEstimate",
     "LogDistanceChannel",
     "MACPacket",
     "MACResult",
+    "Node",
     "PacketStatus",
     "PowerProfile",
+    "RouteDecision",
+    "RoutingAction",
+    "RoutingConfig",
+    "RoutingMetrics",
+    "RoutingPacket",
+    "SinkTreeRouting",
+    "Topology",
+    "TopologyConfig",
     "Transmission",
     "transmission_intervals_overlap",
 ]

@@ -441,7 +441,7 @@ class CSMAMAC(BaseMAC):
         self,
         packet: MACPacket,
         *,
-        duration_s: object,
+        duration_s: float | None,
         attempt: int,
         cw: int,
     ) -> None:
@@ -479,7 +479,7 @@ class CSMAMAC(BaseMAC):
         self,
         packet: MACPacket,
         *,
-        duration_s: object,
+        duration_s: float | None,
         attempt: int,
         cw: int,
     ) -> None:

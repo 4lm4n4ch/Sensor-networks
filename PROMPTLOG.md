@@ -331,3 +331,128 @@ Include generated artifacts:
 
 ## Final Decision
 The `wsnsim` repository successfully passed the review, demonstrating full compliance with all course requirements for Weeks 1-5 and Milestone 1. The project is well-implemented, tested, and documented.
+
+---
+
+Date: 2026-05-15 17:00
+
+## Week 6 Goal
+Build routing and data collection baselines for `wsnsim`, including flooding with TTL/seen-cache, BFS sink-tree routing, fair comparison metrics, tests, an experiment script, generated CSV/PNG artifacts, README documentation, and this prompt-log entry.
+
+## Context / Files Touched
+- Replaced the placeholder `wsnsim/models/routing.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_routing.py`.
+- Added `experiments/week06_routing_compare.py`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+- Generated Week 6 outputs under `reports/` and `reports/figures/`.
+
+## Prompt Summary
+- Implement `RoutingPacket`, `RouteDecision`, `RoutingMetrics`, and shared routing configuration.
+- Implement `FloodingRouting` using all neighbors except previous sender, TTL, deterministic forwarding order, and `(packet_id, node_id)` duplicate suppression.
+- Implement `SinkTreeRouting` with BFS shortest-hop parent map rooted at the sink.
+- Reuse Week 5 topology neighbor graphs and document deterministic neighbor-link delivery as the default Week 6 data-plane assumption.
+- Add optional channel-based link success hooks without implementing ACK/retry.
+- Add tests for flooding TTL behavior, duplicate suppression, delivery, sink-tree parent maps, unreachable drops, expected hop counts, deterministic behavior, and metrics sanity.
+- Add a fair comparison experiment for Flooding vs Sink-tree BFS using the same seed, topology, traffic, payload size, TTL, and link assumptions.
+- Save required CSV and PNG artifacts and document run commands.
+
+## Accepted Suggestions
+- Kept Week 6 to baseline routing only; no RPL, LEACH, ACK/retry, mobility, queueing, or congestion model.
+- Used the existing Week 5 adjacency sets as the default deterministic link model for fair protocol comparison.
+- Added simple per-bit TX/RX energy accounting so energy per bit can be compared without requiring a full radio state trace.
+- Exposed `parent_map` and `hop_distance_map` for sink-tree inspection.
+- Counted flooding duplicate/control overhead separately from generated packet count so PDR remains source-packet based.
+- Included experiment captions with seed, node count, topology type, communication range, payload size, TTL, and link assumption.
+
+## Rejected Suggestions
+- Rejected full RPL/6LoWPAN, LEACH clustering, ACKs, retries, and ETX parent selection for this Week 6 baseline.
+- Rejected making routing depend on `networkx`; the existing plain adjacency API is sufficient.
+- Rejected global random state; optional stochastic link success uses a local seeded RNG.
+- Rejected probabilistic channel delivery in the default comparison to avoid giving protocols different random link traces.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_routing.py`: 8 passed.
+- Ran `.venv/bin/python -m pytest -q`: 54 passed.
+- Ran `.venv/bin/python experiments/week06_routing_compare.py`.
+- Inspected `reports/week06_routing_compare.csv`.
+- Confirmed `reports/figures/week06_routing_pdr.png`, `reports/figures/week06_routing_latency.png`, and `reports/figures/week06_routing_energy_per_bit.png` were generated.
+
+## Generated Artifacts
+- `reports/week06_routing_compare.csv`
+- `reports/figures/week06_routing_pdr.png`
+- `reports/figures/week06_routing_latency.png`
+- `reports/figures/week06_routing_energy_per_bit.png`
+
+## Known Limitations
+- Topology is static, links are symmetric, and the default experiment uses deterministic neighbor-link delivery.
+- No ACK/retry, queueing, congestion, duty-cycle availability, mobility, interference, capture effect, or MAC scheduling is modeled in routing.
+- Sink-tree parent selection is BFS shortest-hop only; ETX-like selection is left for a later extension.
+- Energy is a simple per-bit TX/RX accounting model, not full integration through Week 3 state transitions.
+
+## Status
+Week 6 routing implementation, tests, experiment, README section, prompt log entry, and report artifacts added. Full test suite passed.
+
+---
+
+Date: 2026-05-15 17:45
+
+## Week 6 Experiment Improvement Goal
+Improve the Week 6 routing comparison figures by replacing the single easy scenario bar charts with communication-range sweep plots.
+
+## Context / Files Touched
+- Updated `experiments/week06_routing_compare.py`.
+- Regenerated `reports/week06_routing_compare.csv`.
+- Regenerated Week 6 routing figures under `reports/figures/`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+
+## Prompt Summary
+- The original Week 6 figures compared Flooding and Sink-tree BFS at only `40 m`, where both protocols had PDR `1.0` and nearly identical latency.
+- Modify the experiment to sweep communication range using `[15, 20, 25, 30, 35, 40, 45, 50, 60]`.
+- Produce more informative figures that show how protocol behavior changes with graph density and sink reachability.
+
+## Accepted Suggestions
+- Kept seed, node count, topology type, payload size, TTL, and deterministic link assumptions fixed across the sweep.
+- Rebuilt the same seeded random-uniform deployment for each communication range so range is the controlled variable.
+- Wrote one CSV row per protocol per communication range.
+- Added `average_degree` and `sink_reachability_ratio` to the CSV for interpretation.
+- Replaced bar charts with line plots against communication range.
+- Used a log-scale y-axis for energy per delivered bit so Sink-tree BFS remains visible next to Flooding.
+
+## Rejected Suggestions
+- Rejected changing routing semantics or adding ACK/retry/channel randomness for this visualization pass.
+- Rejected adding extra topology or payload sweeps before first making the required range sweep clear.
+
+## Validation Steps
+- Ran `.venv/bin/python experiments/week06_routing_compare.py`.
+- Inspected the updated `reports/week06_routing_compare.csv`.
+- Confirmed regenerated figures:
+  - `reports/figures/week06_routing_pdr.png`
+  - `reports/figures/week06_routing_latency.png`
+  - `reports/figures/week06_routing_energy_per_bit.png`
+- Ran `.venv/bin/python -m pytest -q tests/test_routing.py`: 8 passed.
+- Ran `.venv/bin/python -m pytest -q`: 54 passed.
+
+## Generated Artifacts
+- `reports/week06_routing_compare.csv`
+- `reports/figures/week06_routing_pdr.png`
+- `reports/figures/week06_routing_latency.png`
+- `reports/figures/week06_routing_energy_per_bit.png`
+
+## Recommended Improvements
+- The energy accounting in the routing module is a simplified per-bit model.
+  While acceptable for Week 6, future work could integrate it directly with
+  the more detailed Week 3 `EnergyModel` for a more comprehensive view of node
+  energy states during routing.
+- Consider adding graphical representations of the sink-tree, such as marking
+  parent links in a topology plot, to visually confirm tree structure.
+
+## Known Limitations
+- With deterministic neighbor-link delivery, Flooding and Sink-tree BFS have the same reachability-limited PDR; the main protocol contrast is overhead and energy.
+- Latency remains similar because Flooding's first delivery follows a shortest-hop wave in this static graph.
+- The sweep changes graph density only; it does not yet vary payload size, traffic rate, channel PRR, losses, or retry behavior.
+
+## Status
+Week 6 routing comparison upgraded to communication-range sweep figures and regenerated artifacts. Full test suite passed.

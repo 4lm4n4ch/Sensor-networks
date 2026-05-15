@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-**Milestone 1** covers the Week 1-3 simulator foundation: a deterministic discrete-event core, a basic radio channel model, a state-based energy/lifetime model, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-6: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -31,6 +31,9 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `models/`: WSN node and network models.
         -   `channel.py`: Week 2 log-distance radio channel model with shadowing, RSSI, SNR, PRR, BER/PER, and reproducible packet success sampling.
         -   `energy.py`: Week 3 state-based energy and lifetime model with TX/RX/IDLE/SLEEP power states.
+        -   `mac.py`: Week 4 ALOHA and simplified CSMA MAC model with deterministic collision/backoff behavior.
+        -   `topology.py`: Week 5 deterministic node deployments and distance/PRR-based connectivity graphs.
+        -   `routing.py`: Week 6 flooding and BFS sink-tree routing baselines with PDR, latency, hop-count, duplicate, overhead, and energy-per-bit metrics.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -44,6 +47,8 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `run_sweep.py`: Placeholder for running parameter sweeps or multiple simulation runs.
     -   `week02_prr_curve.py`: Generates the Week 2 PRR-vs-distance curve.
     -   `week03_energy_lifetime.py`: Generates Week 3 lifetime-vs-duty-cycle data and plot.
+    -   `week04_mac_aloha_csma.py`: Generates Week 4 ALOHA-vs-CSMA CSV and plots.
+    -   `week05_topology_connectivity.py`: Generates Week 5 topology and connectivity sweep outputs.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -399,6 +404,146 @@ reports/figures/week04_mac_pdr_vs_load.png
 reports/figures/week04_mac_collision_delay_vs_load.png
 ```
 
+## Week 5: Topology and Connectivity Graphs
+
+Week 5 adds deterministic node deployment and graph construction in `wsnsim.models.topology`. The module is intentionally routing-free: it builds connectivity information that later routing work can consume without committing to a route-selection algorithm yet.
+
+### Topology Architecture
+
+-   `Node`: stable node id, `(x_m, y_m)` position, and role such as `sensor` or `sink`.
+-   `TopologyConfig`: total node count, deployment area dimensions in meters, RNG seed, sink placement, communication range, and optional PRR threshold.
+-   `Topology`: node storage, Euclidean distance helpers, neighbor lookup, connected components, sink reachability, and average degree.
+
+`node_count` is the total number of nodes. When `sink_position` is not `none`, node `0` is reserved as the sink and the remaining nodes are sensors. Supported sink positions are `center`, `corner`, `random`, `none`, or an explicit `(x_m, y_m)` tuple inside the area.
+
+### Deployment Strategies
+
+-   `Topology.random_uniform(config)`: places sensor nodes independently and uniformly in the configured rectangular area using `numpy.random.default_rng(config.seed)`.
+-   `Topology.grid(config)`: places sensor nodes on a deterministic row-major grid over the configured area.
+-   `Topology.clustered(config, cluster_count=..., cluster_std_m=...)`: optional clustered placement around seeded random cluster centers, clipped to the deployment area.
+
+All stochastic placement is local to the topology generator. Same config plus same seed produces identical node positions; no global random state is used.
+
+### Neighbor Graphs
+
+Distance-threshold graphs connect two nodes when:
+
+```text
+distance_m <= communication_range_m
+```
+
+PRR-threshold graphs connect two nodes when the supplied channel reports:
+
+```text
+channel_prr(distance_m) >= prr_threshold
+```
+
+The PRR graph uses `LogDistanceChannel.calculate_link_stats(...)` or any compatible channel object. Shadowing is disabled by default for deterministic graph construction, but can be enabled explicitly.
+
+The graph API supports:
+
+-   `neighbors(node_id)`: neighbor lookup.
+-   `connected_components()`: undirected graph components.
+-   `all_nodes_can_reach_sink()`: full sink connectivity check.
+-   `sink_reachability_ratio()`: fraction of nodes in the sink component.
+-   `average_degree()`: mean node degree.
+
+### Running Week 5 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_topology.py
+```
+
+To run the complete suite:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+### Running The Topology Experiment
+
+```bash
+.venv/bin/python experiments/week05_topology_connectivity.py
+```
+
+The experiment uses seed `2026`, a `100 m x 100 m` area, `40` total nodes, and a centered sink. It saves:
+
+```text
+reports/week05_topology_connectivity.csv
+reports/figures/week05_topology_graph.png
+reports/figures/week05_connectivity_vs_range.png
+```
+
+The topology figure shows node positions in meters, neighbor links, and the highlighted sink. The range-sweep figure reports communication range in meters against average node degree and the fraction of nodes reachable from the sink.
+
+## Week 6: Routing and Data Collection
+
+Week 6 adds routing baselines in `wsnsim.models.routing` for static WSN data collection to one sink. The protocols consume the Week 5 `Topology` neighbor graph and use deterministic neighbor-link delivery by default. An optional channel-based probabilistic one-hop success mode is available, but the Week 6 experiment keeps links deterministic so Flooding and Sink-tree use identical topology, traffic, seed, payload size, and link assumptions.
+
+### Routing Architecture
+
+-   `RoutingPacket`: packet id, source, destination/sink, current/previous node, creation time, TTL, payload bits, and hop count.
+-   `RouteDecision`: `FORWARD`, `DELIVER`, or `DROP`, with a reason and next-hop ids.
+-   `RoutingMetrics`: generated/delivered/dropped packets, duplicates, total hops, total latency, total energy, control overhead, PDR, average latency, average hop count, and energy per delivered/generated bit.
+-   `RoutingConfig`: hop delay, per-bit TX/RX energy, RNG seed, and optional channel-success settings.
+
+### Flooding Routing
+
+`FloodingRouting` forwards each packet to all neighbors except the previous sender. A per-router seen-cache keyed by `(packet_id, node_id)` suppresses duplicate copies, and TTL prevents infinite propagation on cyclic graphs. Delivery is counted once when the packet first reaches the sink; later copies at the sink are counted as duplicates. Flooding overhead is reported through duplicate count and `control_overhead_packets`.
+
+### Sink-tree Routing
+
+`SinkTreeRouting` builds a BFS shortest-hop tree rooted at the sink and exposes `parent_map` plus `hop_distance_map`. Each node forwards only to its parent toward the sink. Nodes outside the sink component are dropped cleanly with reason `unreachable_to_sink`. ETX/RPL, ACKs, retries, queueing, mobility, asymmetric links, and congestion are intentionally not modeled in Week 6.
+
+### Metrics
+
+The routing metrics include:
+
+```text
+PDR = delivered_packets / generated_packets
+average_latency_s = total_latency_s / delivered_packets
+average_hop_count = total_hops / delivered_packets
+energy_per_delivered_bit_j = total_energy_j / delivered_payload_bits
+energy_per_generated_bit_j = total_energy_j / generated_payload_bits
+```
+
+Energy accounting is a simple documented per-bit TX/RX model, not a full radio state trace through the Week 3 `EnergyModel`.
+
+### Running Week 6 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_routing.py
+```
+
+To run the complete suite:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+### Running The Routing Experiment
+
+```bash
+.venv/bin/python experiments/week06_routing_compare.py
+```
+
+The experiment uses seed `2026`, `25` total nodes, a `100 m x 100 m` random-uniform topology, centered sink, `64 B` payloads, TTL `10`, and deterministic neighbor-link delivery. It sweeps communication range over:
+
+```text
+15, 20, 25, 30, 35, 40, 45, 50, 60 m
+```
+
+For each range, the same deployment seed and traffic pattern are used for Flooding and Sink-tree BFS. The CSV includes average degree and sink reachability ratio so the routing metrics can be interpreted against graph connectivity. The figures plot metric trends against communication range:
+
+```text
+reports/week06_routing_compare.csv
+reports/figures/week06_routing_pdr.png
+reports/figures/week06_routing_latency.png
+reports/figures/week06_routing_energy_per_bit.png
+```
+
+In this deterministic-link setup, Flooding and Sink-tree BFS have the same reachability-limited PDR and first-delivery hop latency, but Flooding shows much higher duplicate/control overhead and energy per bit. The energy figure uses a log-scale y-axis so both protocols remain visible.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -436,9 +581,9 @@ To set up and run `wsnsim`, follow these steps:
 
 ## Testing Section
 
-`wsnsim` emphasizes robust testing to ensure the correctness and deterministic behavior of the Milestone 1 simulator foundation.
+`wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; and energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; and routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 
