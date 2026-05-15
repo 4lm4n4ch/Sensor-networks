@@ -201,3 +201,133 @@ Build the first MAC layer module for `wsnsim`, focused on ALOHA vs simplified CS
 
 ## Status
 Week 4 MAC implementation, tests, experiment, README section, and prompt log entry added.
+
+---
+
+Date: 2026-05-14 16:40
+
+## Week 5 Goal
+Build topology and connectivity graph support for `wsnsim`, including deterministic WSN node deployments, distance-based and PRR-based neighbor graphs, sink reachability, connected components, tests, an experiment script, README documentation, and this prompt-log entry.
+
+## Context / Files Touched
+- Added `wsnsim/models/topology.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_topology.py`.
+- Added `experiments/week05_topology_connectivity.py`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+- Generated Week 5 report outputs under `reports/` and `reports/figures/`.
+
+## Prompt Summary
+- Implement `Node`, `TopologyConfig`, and `Topology`.
+- Add random uniform and grid deployment strategies, with clustered deployment as an optional extra.
+- Use `numpy.random.default_rng(seed)` and avoid global random state.
+- Build undirected neighbor graphs using either communication range or channel PRR threshold.
+- Provide graph queries for neighbors, connected components, average degree, sink reachability, and sink reachability ratio.
+- Add tests for reproducibility, bounds, grid placement, distance sanity, graph threshold behavior, and sink connectivity.
+- Add a Week 5 experiment that plots topology links and communication range vs connectivity metrics.
+- Document run commands and output paths.
+
+## Accepted Suggestions
+- Treated `node_count` as total nodes, reserving node `0` as the sink when a sink position is configured.
+- Kept topology graphs as plain adjacency sets to avoid making graph operations depend on `networkx`.
+- Added deterministic `random_uniform`, deterministic `grid`, and seeded `clustered` deployments.
+- Used Euclidean distance in meters and explicit `_m` suffixes.
+- Kept PRR graph construction compatible with the Week 2 channel API.
+- Disabled shadowing by default for deterministic PRR-threshold graph construction.
+- Added both boolean full sink connectivity and fractional sink reachability for experiments.
+
+## Rejected Suggestions
+- Rejected adding routing behavior in Week 5; topology only builds connectivity information.
+- Rejected global random state and non-seeded deployment randomness.
+- Rejected making `networkx` mandatory for the topology graph API.
+- Rejected mixing MAC interference/collision behavior into topology connectivity.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_topology.py`.
+- Ran `.venv/bin/python -m pytest -q`.
+- Ran `.venv/bin/python experiments/week05_topology_connectivity.py`.
+- Confirmed `reports/week05_topology_connectivity.csv`, `reports/figures/week05_topology_graph.png`, and `reports/figures/week05_connectivity_vs_range.png` were generated.
+
+## Known Limitations
+- Graphs are undirected and symmetric; asymmetric links are not modeled yet.
+- PRR-threshold graphs use one link estimate per pair and do not model temporal link variation unless shadowing is explicitly enabled.
+- Connectivity is based on geometric or PRR thresholds only; no routing, interference, duty-cycle availability, retransmissions, or link capacity constraints are modeled in Week 5.
+- The sink is a single configured node; multi-sink topologies are left for future extensions.
+
+## Status
+Week 5 topology implementation, tests, experiment, README section, prompt log entry, and report artifacts added.
+
+---
+
+Date: 2026-05-15 14:30
+
+## Repository Review Goal
+Performed a comprehensive review of the `wsnsim` repository to check its compliance with course requirements for Weeks 1–5 and Milestone 1, including code implementation, tests, documentation, and generated artifacts.
+
+## Context
+Files/modules touched:
+- `README.md`
+- `PROMPTLOG.md`
+- `wsnsim/sim/sim.py`
+- `wsnsim/models/channel.py`
+- `wsnsim/models/energy.py`
+- `wsnsim/models/mac.py`
+- `wsnsim/models/topology.py`
+- `tests/` (all test files within)
+- `experiments/` (all experiment scripts within)
+- `reports/figures/` (all generated figures)
+- `reports/` (all generated CSV files)
+
+Branch/commit if known:
+- not recorded
+
+## Prompt Summary
+- Inspect actual code, tests, README, PROMPTLOG, experiments, and generated figures.
+- Verify behavior by reading code and running tests/experiments.
+- Check compliance for Weeks 1-5 and Milestone 1, against specific criteria for scheduler, channel, energy, MAC, and topology.
+- Produce a structured review in a specified format.
+
+## AI Response Summary
+- Conducted an initial research phase, reviewing project structure and documentation (`README.md`, `PROMPTLOG.md`).
+- Performed a detailed code implementation review of `wsnsim/sim/sim.py` and modules under `wsnsim/models/`.
+- Executed the full project test suite and all experiment scripts.
+- Verified the generation, content, and scientific plausibility of all required figures and CSV outputs.
+- Compiled a structured review report.
+
+## Accepted Suggestions
+- The existing project implementation for Weeks 1-5 and Milestone 1 was found to be in full compliance with all stated requirements. No new design suggestions were made for this review, as the task was to evaluate existing work.
+
+## Rejected Suggestions
+- No major suggestions were rejected.
+
+## Validation Steps
+- `bash -c "source .venv/bin/activate && ./run_tests.sh"`
+- `bash -c "source .venv/bin/activate && export PYTHONPATH=$PYTHONPATH:. && python experiments/hello_simulation.py"`
+- `bash -c "source .venv/bin/activate && export PYTHONPATH=$PYTHONPATH:. && python experiments/week02_prr_curve.py"`
+- `bash -c "source .venv/bin/activate && export PYTHONPATH=$PYTHONPATH:. && python experiments/week03_energy_lifetime.py"`
+- `bash -c "source .venv/bin/activate && export PYTHONPATH=$PYTHONPATH:. && python experiments/week04_mac_aloha_csma.py"`
+- `bash -c "source .venv/bin/activate && export PYTHONPATH=$PYTHONPATH:. && python experiments/week05_topology_connectivity.py"`
+
+Include generated artifacts:
+- `reports/figures/week02_prr_vs_distance.png`
+- `reports/figures/week03_lifetime_vs_duty_cycle.png`
+- `reports/figures/week04_mac_pdr_vs_load.png`
+- `reports/figures/week04_mac_collision_delay_vs_load.png`
+- `reports/figures/week05_topology_graph.png`
+- `reports/figures/week05_connectivity_vs_range.png`
+- `reports/week03_energy_lifetime.csv`
+- `reports/week04_mac_aloha_csma.csv`
+- `reports/week05_topology_connectivity.csv`
+
+## Results
+- Tests: 46 passed.
+- Figures: All created and found to be scientifically plausible.
+- CSV/results: All created.
+
+## Known Limitations
+- Some experiment scripts may require `export PYTHONPATH=$PYTHONPATH:.` when run outside of the virtual environment activation or editable install. A small `setup.py` or `pyproject.toml` could provide a more robust solution.
+- Experiment script outputs could benefit from a concise "Simulation Summary" at the end for quicker analysis.
+
+## Final Decision
+The `wsnsim` repository successfully passed the review, demonstrating full compliance with all course requirements for Weeks 1-5 and Milestone 1. The project is well-implemented, tested, and documented.
