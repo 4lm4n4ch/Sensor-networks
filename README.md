@@ -885,6 +885,24 @@ reports/figures/week11_signal_detection_example.png
 
 This module can support an M3 Edge AI focus by providing a reproducible anomaly-detection pipeline, detector-quality metrics, and communication/energy trade-off plots. It can also combine naturally with the Week 10 security focus: anomaly events can be secured with replay protection, letting M3 compare Security + AI costs against communication savings.
 
+## Milestone 3 Summary
+
+Milestone 3 is prepared as a **Combined Security and Edge AI** submission. The security side is covered by `wsnsim.models.security`, `tests/test_security.py`, `experiments/week10_security_overhead.py`, `reports/week10_threat_checklist.md`, `reports/week10_security_overhead.csv`, and the Week 10 figures under `reports/figures/`. The Edge AI side is covered by `wsnsim.models.edge_ai`, `tests/test_edge_ai.py`, `experiments/week11_edge_ai_detector.py`, `reports/week11_edge_ai_detector.csv`, `reports/week11_edge_ai_report.md`, and the Week 11 figures under `reports/figures/`.
+
+The concise submission evidence report is:
+
+```text
+reports/m3_summary.md
+```
+
+Run the full M3 verification path with:
+
+```bash
+.venv/bin/python -m pytest -q
+.venv/bin/python experiments/week10_security_overhead.py
+.venv/bin/python experiments/week11_edge_ai_detector.py
+```
+
 ### Week 11 Limitations
 
 The detector is intentionally lightweight. It does not train a learned model, adapt thresholds automatically, model concept drift, compress event payloads, account for CPU inference energy, or simulate adversarial examples. The synthetic anomalies are additive spikes, so future work could add gradual drifts, stuck-at faults, spatially correlated events, and integration with routing/MAC/energy state traces.

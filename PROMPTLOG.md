@@ -949,3 +949,35 @@ Implement Edge AI in `wsnsim`: a deterministic edge anomaly detector for WSN sen
 
 ## Status
 Week 11 Edge AI module, tests, experiment, CSV, figures, mini report, README documentation, and prompt log entry added.
+
+
+---
+
+Date: 2026-05-15
+
+## Milestone 3 Submission Preparation Goal
+Prepare the `wsnsim` repository for Milestone 3 submission and verify whether the strongest submission focus should be Security, Edge AI, or Combined.
+
+## Context / Files Touched
+- Added `reports/m3_summary.md`.
+- Updated `README.md` with a concise Milestone 3 Combined submission note.
+- Updated `PROMPTLOG.md`.
+
+## Prompt Summary
+- Inspect source modules, tests, experiments, reports, figures, README, PROMPTLOG, and Git status.
+- Verify Security focus readiness: replay protection module, abuse-case test, threat checklist, overhead CSV, figures, baseline/no-security behavior, overhead bytes, CPU/latency overhead, and replay rejection behavior.
+- Verify Edge AI focus readiness: deterministic signal generator, ground-truth labels, z-score detector, threshold sweep, communication-saving metric, FP/FN metrics, CSV, figures, and mini report.
+- Create an evidence-based M3 summary report with focus, implemented modules, security evidence, Edge AI evidence, reproducibility commands, and known limitations.
+
+## Results
+- Selected **Combined focus** because both Week 10 security and Week 11 Edge AI artifacts are implemented and documented.
+- Confirmed the required Security artifacts exist: `wsnsim/models/security.py`, `tests/test_security.py`, `experiments/week10_security_overhead.py`, `reports/week10_threat_checklist.md`, `reports/week10_security_overhead.csv`, and the preferred Week 10 figures.
+- Confirmed the required Edge AI artifacts exist: `wsnsim/models/edge_ai.py`, `tests/test_edge_ai.py`, `experiments/week11_edge_ai_detector.py`, `reports/week11_edge_ai_detector.csv`, `reports/week11_edge_ai_report.md`, and the preferred Week 11 figures.
+- Recorded concrete result evidence: at replay attack rate `0.4`, baseline accepts `400` replay packets while replay protection rejects `400`; Edge AI threshold sweep shows communication saving from `0.835` to `0.985` with the expected false-negative trade-off.
+
+## Known Limitations
+- Security remains a deterministic overhead/replay model, not real cryptography.
+- Edge AI uses a lightweight analytic detector and packet-count communication model rather than full packet-level integration with MAC/routing/security.
+
+## Status
+Milestone 3 Combined summary and README/PROMPTLOG updates added.
