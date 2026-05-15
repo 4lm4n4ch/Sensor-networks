@@ -981,3 +981,59 @@ Prepare the `wsnsim` repository for Milestone 3 submission and verify whether th
 
 ## Status
 Milestone 3 Combined summary and README/PROMPTLOG updates added.
+
+
+---
+
+Date: 2026-05-15
+
+## Week 12 Goal
+Prepare the `wsnsim` repository for Week 12 submission by adding a deterministic Federated Learning simulation focused on communication cost trade-offs for WSNs.
+
+## Context / Files Touched
+- Added `wsnsim/models/federated.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_federated.py`.
+- Added `experiments/week12_federated_learning.py`.
+- Generated `reports/week12_federated_learning.csv`.
+- Generated `reports/week12_federated_learning_report.md`.
+- Generated Week 12 figures under `reports/figures/`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+
+## Prompt Summary
+- Inspect repository source modules, tests, experiments, reports, figures, README, PROMPTLOG, and Git status.
+- Implement a lightweight FedAvg simulation with `FederatedConfig`, `FederatedNode`, `FederatedServer`, `fedavg`, communication-estimation helpers, and `run_federated_simulation`.
+- Use deterministic synthetic local node statistics and local updates toward those statistics.
+- Account for per-round FL upload/download bytes using model size, participating node count, overhead, and rounds.
+- Compare FL communication against a centralized raw-data upload baseline.
+- Export an update-period sweep to CSV and generate communication/convergence figures.
+- Add tests for FedAvg correctness, communication-cost monotonicity, deterministic seeds, FL savings, and controlled toy convergence.
+
+## Accepted Suggestions
+- Kept the model numeric and deterministic instead of using a heavy ML framework.
+- Used sample-weighted FedAvg as the baseline aggregation rule.
+- Treated update period as a direct knob for communication rounds.
+- Reported `distance_to_target`, `proxy_loss`, and bounded `proxy_accuracy` as convergence/quality proxies.
+- Documented that communication accounting is simplified and does not claim real privacy.
+
+## Generated Artifacts
+- `reports/week12_federated_learning.csv`
+- `reports/week12_federated_learning_report.md`
+- `reports/figures/week12_update_period_vs_comm_cost.png`
+- `reports/figures/week12_rounds_vs_convergence.png`
+- `reports/figures/week12_fl_vs_centralized_comm_cost.png`
+- `reports/figures/week12_comm_cost_vs_proxy_accuracy.png`
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_federated.py`.
+- Ran `.venv/bin/python -m pytest -q`.
+- Ran `.venv/bin/python experiments/week12_federated_learning.py`.
+
+## Known Limitations
+- The FL model is a toy numeric simulation, not a trained neural network.
+- Local learning is simplified movement toward synthetic local statistics.
+- No real privacy guarantee, secure aggregation, packet loss, MAC contention, or routing-hop accounting is included.
+
+## Status
+Week 12 Federated Learning module, tests, experiment, CSV, figures, report, README documentation, and prompt log entry added.
