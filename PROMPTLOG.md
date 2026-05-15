@@ -1095,3 +1095,111 @@ Prepare the `wsnsim` repository for Week 13 submission by adding a simple Design
 
 ## Status
 Week 13 optimization module, tests, experiment, CSV, figures, report, README documentation, and prompt log entry added.
+
+
+---
+
+Date: 2026-05-15
+
+## Week 14 / M4 Final Submission Goal
+Prepare the `wsnsim` repository for the final M4 submission by integrating the
+weekly modules into a reproducible final case study, finalizing documentation,
+checking reproducibility, generating presentation material, and validating the
+critical test and experiment commands.
+
+## Context / Files Touched
+- Added `configs/m4_final.json`.
+- Added `experiments/m4_final_case_study.py`.
+- Generated `reports/m4_final_results.csv`.
+- Generated `reports/m4_final_config_dump.json`.
+- Generated `reports/m4_final_summary.md`.
+- Generated `reports/m4_case_study.md`.
+- Generated `reports/m4_final_report.md`.
+- Generated `reports/m4_reproducibility_checklist.md`.
+- Generated M4 figures under `reports/figures/`.
+- Added `presentation/m4_wsnsim_presentation.md`.
+- Replaced the long development README with a concise final README.
+- Updated this `PROMPTLOG.md`.
+
+## Prompt Summary
+- Inspect repository structure, modules, tests, experiments, configs, reports,
+  figures, README, PROMPTLOG, dependencies, and Git status.
+- Verify all implemented weekly modules from scheduler/channel/energy through
+  Edge AI, Federated Learning, and Pareto optimization.
+- Create a final environmental-monitoring WSN case study with deterministic
+  seed, topology/traffic assumptions, metrics, 2-3 alternatives, an automatic
+  sweep, Pareto-front extraction, and a justified design choice.
+- Add one main command that loads config, dumps the exact config used, writes a
+  CSV, marks Pareto candidates, generates figures, and writes reports.
+- Finalize README, reproducibility checklist, final report, and presentation
+  outline with concrete numbers and paths.
+
+## Accepted Suggestions
+- Reused the Week 13 Pareto utilities instead of adding a new optimization
+  framework.
+- Kept the M4 evaluator deterministic and config-driven.
+- Used an environmental monitoring WSN scenario with periodic reports and
+  anomaly/event traffic.
+- Compared three named alternatives: low-energy baseline, reliability-oriented,
+  and balanced secured edge.
+- Included five objectives: maximize PDR and security coverage; minimize energy
+  per delivered packet, mean latency, and total transmitted bytes.
+- Selected `alt_C_balanced` after updating it to match a Pareto-efficient
+  secured Edge AI point from the sweep.
+
+## Rejected Or Modified Suggestions
+- Did not force a new package layout because the existing `wsnsim/` structure is
+  already coherent and modular.
+- Did not add a heavy optimizer or ML framework; the final case study remains
+  lightweight and reproducible.
+- Did not delete generated weekly reports or figures; they remain useful
+  evidence for earlier milestones.
+- Modified the initially drafted balanced design because the first version was
+  dominated by sweep points; the final version is Pareto-efficient.
+
+## Validation Method
+- Ran the M4 experiment with the repository virtual environment:
+  `.venv/bin/python experiments/m4_final_case_study.py --config configs/m4_final.json`.
+- Confirmed the CSV contains headers, objective metrics, `is_pareto`, dominance
+  counts, and recommendation ranks.
+- Confirmed the final recommended design `alt_C_balanced` is marked
+  `is_pareto=True`.
+- Ran the final test suite command during M4 verification.
+
+## Result Evidence
+- Evaluated `219` configurations.
+- Identified `11` Pareto-efficient configurations.
+- Recommended `alt_C_balanced`: CSMA, retry limit `2`, radio range `55 m`,
+  aggregation threshold `0.45`, replay protection enabled, and Edge AI enabled.
+- Recommended metrics: PDR `0.945`, mean latency `0.0166 s`, energy per
+  delivered packet `0.000155 J`, total transmitted bytes `11042`, communication
+  saving ratio `0.726`.
+
+## Final Files Changed
+- `configs/m4_final.json`
+- `experiments/m4_final_case_study.py`
+- `reports/m4_final_results.csv`
+- `reports/m4_final_config_dump.json`
+- `reports/m4_final_summary.md`
+- `reports/m4_case_study.md`
+- `reports/m4_final_report.md`
+- `reports/m4_reproducibility_checklist.md`
+- `reports/figures/m4_pareto_energy_vs_pdr.png`
+- `reports/figures/m4_latency_vs_energy.png`
+- `reports/figures/m4_design_alternatives_comparison.png`
+- `reports/figures/m4_final_topology.png`
+- `presentation/m4_wsnsim_presentation.md`
+- `README.md`
+- `PROMPTLOG.md`
+
+## Known Limitations
+- The final M4 evaluator is an analytic integration proxy rather than a full
+  packet-level cross-layer simulation.
+- Energy, radio, security, Edge AI, and FL models are simplified and
+  uncalibrated.
+- The final command assumes project dependencies are installed, typically by
+  activating `.venv` or installing `requirements.txt`.
+
+## Status
+Week 14 / M4 final case study, reproducibility artifacts, final report,
+presentation outline, README, and prompt log closure added.

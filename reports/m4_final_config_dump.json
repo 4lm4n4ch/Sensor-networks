@@ -1,0 +1,134 @@
+{
+  "alternatives": [
+    {
+      "aggregation_threshold": 0.45,
+      "config_id": "alt_A_low_energy",
+      "design_label": "Alternative A - low-energy baseline",
+      "edge_ai_enabled": true,
+      "edge_ai_threshold": 3.0,
+      "mac": "csma",
+      "node_count": 35,
+      "radio_range_m": 40.0,
+      "retry_limit": 0,
+      "security_enabled": false,
+      "seed": 2026
+    },
+    {
+      "aggregation_threshold": 0.0,
+      "config_id": "alt_B_reliability",
+      "design_label": "Alternative B - reliability-oriented",
+      "edge_ai_enabled": false,
+      "edge_ai_threshold": 2.5,
+      "mac": "csma",
+      "node_count": 35,
+      "radio_range_m": 55.0,
+      "retry_limit": 4,
+      "security_enabled": true,
+      "seed": 2026
+    },
+    {
+      "aggregation_threshold": 0.45,
+      "config_id": "alt_C_balanced",
+      "design_label": "Alternative C - balanced secured edge",
+      "edge_ai_enabled": true,
+      "edge_ai_threshold": 2.5,
+      "mac": "csma",
+      "node_count": 35,
+      "radio_range_m": 55.0,
+      "retry_limit": 2,
+      "security_enabled": true,
+      "seed": 2026
+    }
+  ],
+  "objectives": [
+    {
+      "direction": "maximize",
+      "name": "pdr"
+    },
+    {
+      "direction": "minimize",
+      "name": "energy_per_delivered_packet"
+    },
+    {
+      "direction": "minimize",
+      "name": "latency_mean"
+    },
+    {
+      "direction": "minimize",
+      "name": "total_tx_bytes"
+    },
+    {
+      "direction": "maximize",
+      "name": "security_coverage"
+    }
+  ],
+  "outputs": {
+    "alternatives_figure": "reports/figures/m4_design_alternatives_comparison.png",
+    "case_study": "reports/m4_case_study.md",
+    "config_dump": "reports/m4_final_config_dump.json",
+    "final_report": "reports/m4_final_report.md",
+    "latency_energy_figure": "reports/figures/m4_latency_vs_energy.png",
+    "pareto_figure": "reports/figures/m4_pareto_energy_vs_pdr.png",
+    "presentation": "presentation/m4_wsnsim_presentation.md",
+    "reproducibility_checklist": "reports/m4_reproducibility_checklist.md",
+    "results_csv": "reports/m4_final_results.csv",
+    "summary_report": "reports/m4_final_summary.md",
+    "topology_figure": "reports/figures/m4_final_topology.png"
+  },
+  "recommended_config_id": "alt_C_balanced",
+  "scenario": {
+    "area_height_m": 100.0,
+    "area_width_m": 100.0,
+    "battery_j_per_node": 1000.0,
+    "bitrate_bps": 250000.0,
+    "description": "Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic.",
+    "event_probability": 0.05,
+    "name": "environmental_monitoring_wsn",
+    "node_count": 35,
+    "payload_bytes": 48,
+    "samples_per_node": 12,
+    "seed": 2026,
+    "sink_position_m": [
+      50.0,
+      50.0
+    ]
+  },
+  "sweep": {
+    "aggregation_threshold": [
+      0.0,
+      0.35,
+      0.45
+    ],
+    "edge_ai_enabled": [
+      false,
+      true
+    ],
+    "edge_ai_threshold": [
+      2.5
+    ],
+    "mac": [
+      "aloha",
+      "csma"
+    ],
+    "node_count": [
+      35
+    ],
+    "radio_range_m": [
+      30.0,
+      40.0,
+      55.0
+    ],
+    "retry_limit": [
+      0,
+      2,
+      4
+    ],
+    "security_enabled": [
+      false,
+      true
+    ],
+    "seed": [
+      2026
+    ]
+  }
+}

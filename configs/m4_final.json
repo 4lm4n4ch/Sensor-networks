@@ -1,0 +1,89 @@
+{
+  "scenario": {
+    "name": "environmental_monitoring_wsn",
+    "description": "Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic.",
+    "seed": 2026,
+    "node_count": 35,
+    "area_width_m": 100.0,
+    "area_height_m": 100.0,
+    "sink_position_m": [50.0, 50.0],
+    "samples_per_node": 12,
+    "payload_bytes": 48,
+    "event_probability": 0.05,
+    "bitrate_bps": 250000.0,
+    "battery_j_per_node": 1000.0
+  },
+  "objectives": [
+    {"name": "pdr", "direction": "maximize"},
+    {"name": "energy_per_delivered_packet", "direction": "minimize"},
+    {"name": "latency_mean", "direction": "minimize"},
+    {"name": "total_tx_bytes", "direction": "minimize"},
+    {"name": "security_coverage", "direction": "maximize"}
+  ],
+  "alternatives": [
+    {
+      "config_id": "alt_A_low_energy",
+      "design_label": "Alternative A - low-energy baseline",
+      "seed": 2026,
+      "node_count": 35,
+      "mac": "csma",
+      "retry_limit": 0,
+      "radio_range_m": 40.0,
+      "aggregation_threshold": 0.45,
+      "security_enabled": false,
+      "edge_ai_enabled": true,
+      "edge_ai_threshold": 3.0
+    },
+    {
+      "config_id": "alt_B_reliability",
+      "design_label": "Alternative B - reliability-oriented",
+      "seed": 2026,
+      "node_count": 35,
+      "mac": "csma",
+      "retry_limit": 4,
+      "radio_range_m": 55.0,
+      "aggregation_threshold": 0.0,
+      "security_enabled": true,
+      "edge_ai_enabled": false,
+      "edge_ai_threshold": 2.5
+    },
+    {
+      "config_id": "alt_C_balanced",
+      "design_label": "Alternative C - balanced secured edge",
+      "seed": 2026,
+      "node_count": 35,
+      "mac": "csma",
+      "retry_limit": 2,
+      "radio_range_m": 55.0,
+      "aggregation_threshold": 0.45,
+      "security_enabled": true,
+      "edge_ai_enabled": true,
+      "edge_ai_threshold": 2.5
+    }
+  ],
+  "sweep": {
+    "seed": [2026],
+    "node_count": [35],
+    "mac": ["aloha", "csma"],
+    "retry_limit": [0, 2, 4],
+    "radio_range_m": [30.0, 40.0, 55.0],
+    "aggregation_threshold": [0.0, 0.35, 0.45],
+    "security_enabled": [false, true],
+    "edge_ai_enabled": [false, true],
+    "edge_ai_threshold": [2.5]
+  },
+  "recommended_config_id": "alt_C_balanced",
+  "outputs": {
+    "results_csv": "reports/m4_final_results.csv",
+    "config_dump": "reports/m4_final_config_dump.json",
+    "summary_report": "reports/m4_final_summary.md",
+    "case_study": "reports/m4_case_study.md",
+    "final_report": "reports/m4_final_report.md",
+    "reproducibility_checklist": "reports/m4_reproducibility_checklist.md",
+    "presentation": "presentation/m4_wsnsim_presentation.md",
+    "pareto_figure": "reports/figures/m4_pareto_energy_vs_pdr.png",
+    "latency_energy_figure": "reports/figures/m4_latency_vs_energy.png",
+    "alternatives_figure": "reports/figures/m4_design_alternatives_comparison.png",
+    "topology_figure": "reports/figures/m4_final_topology.png"
+  }
+}
