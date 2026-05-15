@@ -511,3 +511,207 @@ Build link-level reliability for `wsnsim` using ACK + retry/backoff ARQ, includi
 
 ## Status
 Week 7 reliability implementation, tests, experiment, README section, prompt log entry, and report artifacts added. Full test suite passed.
+
+---
+
+
+
+Date: 2026-05-15
+
+## Milestone 2 Review Goal
+Reviewed the `wsnsim` repository to determine its readiness for Milestone 2 submission (Protocols, due Week 7), verifying the implementation, tests, experiments, metrics, and documentation for MAC, Routing, and Reliability modules.
+
+## Context
+Files/modules touched:
+- `README.md`
+- `PROMPTLOG.md`
+- `wsnsim/models/mac.py`
+- `wsnsim/models/routing.py`
+- `wsnsim/models/reliability.py`
+- `tests/test_mac.py`
+- `tests/test_routing.py`
+- `tests/test_reliability.py`
+- `experiments/week04_mac_aloha_csma.py`
+- `experiments/week06_routing_compare.py`
+- `experiments/week07_reliability_arq.py`
+- `reports/week07_reliability_arq.csv`
+- `reports/figures/week07_reliability_arq_tradeoff.png`
+
+Branch/commit if known:
+- not recorded
+
+## Prompt Summary
+- Inspect actual code, tests, README, PROMPTLOG, experiments, CSVs, and PNGs for M2 requirements.
+- Verify MAC module (ALOHA, CSMA, deterministic backoff, collision detection, documentation, tests).
+- Verify Routing module (Flooding, TTL, seen-cache, Sink-tree/BFS, parent map, unreachable handling, metrics, tests).
+- Verify Reliability/ARQ module (ACK, retry limit, timeout, deterministic backoff, lost data/ACK handling, metrics, tests).
+- Check integration with Week 1 scheduler, Week 2 channel, Week 3 energy, Week 5 topology, Week 6 routing.
+- Verify at least one M2 comparison experiment (PDR, latency, energy/bit metrics, fixed seed, documented outputs).
+- Check quality of generated figures (title, labels, units, legend, plausibility).
+- Review `README.md` for completeness and accuracy of M2-relevant sections.
+
+## AI Response Summary
+- Confirmed repository structure, `README.md`, and `PROMPTLOG.md` are up-to-date.
+- Performed detailed code reviews of `wsnsim/models/mac.py`, `wsnsim/models/routing.py`, and `wsnsim/models/reliability.py` against M2 requirements.
+- Verified that all required tests for MAC, Routing, and Reliability modules exist and passed.
+- Confirmed that the `week07_reliability_arq.py` experiment (retry-limit sweep) serves as the primary M2 experiment, generating required PDR, latency, and energy metrics.
+- Reviewed generated CSV and PNG outputs, confirming their existence, quality, and scientific plausibility.
+- Compiled a comprehensive M2 review report.
+
+## Accepted Suggestions
+- The existing implementation for MAC, Routing, and Reliability, including their tests, documentation, and experiments, was found to be in full compliance with all stated Milestone 2 requirements. No new design suggestions were made for this review, as the task was to evaluate existing work.
+
+## Rejected Suggestions
+- No major suggestions were rejected.
+
+## Validation Steps
+- `bash -c "source .venv/bin/activate && .venv/bin/python -m pytest -q"`
+- `bash -c "source .venv/bin/activate && .venv/bin/python experiments/week04_mac_aloha_csma.py"`
+- `bash -c "source .venv/bin/activate && .venv/bin/python experiments/week06_routing_compare.py"`
+- `bash -c "source .venv/bin/activate && .venv/bin/python experiments/week07_reliability_arq.py"`
+
+Include generated artifacts:
+- `reports/week04_mac_aloha_csma.csv`
+- `reports/figures/week04_mac_pdr_vs_load.png`
+- `reports/figures/week04_mac_collision_delay_vs_load.png`
+- `reports/week06_routing_compare.csv`
+- `reports/figures/week06_routing_pdr.png`
+- `reports/figures/week06_routing_latency.png`
+- `reports/figures/week06_routing_energy_per_bit.png`
+- `reports/week07_reliability_arq.csv`
+- `reports/figures/week07_reliability_arq_tradeoff.png`
+
+## Results
+- Tests: 66 passed (full suite).
+- Figures: All created and found to be scientifically plausible for M2.
+- CSV/results: All created and consistent with figures.
+
+## Known Limitations
+- MAC, Routing, and Reliability modules use simplified energy accounting (per-bit model or hooks) rather than full integration with the detailed Week 3 `EnergyModel`.
+- Reliability is modeled for one logical link; multi-hop route composition with ARQ is left for future integration.
+- ACK/data contention through the Week 4 MAC is not yet modeled in the reliability layer.
+
+## Final Decision
+The `wsnsim` repository successfully passed the Milestone 2 review, demonstrating full compliance with all M2 requirements. The project is well-implemented, tested, and documented, making it ready for submission.
+
+
+
+Date: 2026-05-15
+
+## Week 8 Goal
+Build time synchronization and localization support for `wsnsim`, including ppm clock drift, simple offset synchronization, RSSI-to-distance localization, least-squares trilateration, tests, an experiment script, generated CSV/PNG artifacts, README documentation, and this prompt-log entry.
+
+## Context / Files Touched
+- Added `wsnsim/models/sync_localization.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_sync_localization.py`.
+- Added `experiments/week08_sync_localization.py`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+- Generated Week 8 outputs under `reports/` and `reports/figures/`.
+
+## Prompt Summary
+- Implement `ClockConfig` and `NodeClock` with correct ppm conversion:
+  `drift_factor = 1.0 + drift_ppm * 1e-6`.
+- Support positive and negative drift, additive offset, drift error, and inverse local-to-true conversion.
+- Add simple one-shot offset synchronization via `TimeSyncResult`.
+- Implement `AnchorNode`, `UnknownNode`, `RSSIMeasurement`, `LocalizationResult`, and an RSSI localization config.
+- Implement log-distance RSSI generation and inverse RSSI-to-distance estimation.
+- Implement 2D trilateration using NumPy least squares with clear failures for too few anchors or bad geometry.
+- Add tests for known clock and geometry cases.
+- Add a Week 8 experiment that sweeps RSSI noise/shadowing sigma `[0, 1, 2, 4, 6, 8]`.
+
+## Accepted Suggestions
+- Kept the module NumPy-only and avoided adding SciPy.
+- Used explicit units in names: seconds, ppm, meters, dBm, and dB.
+- Kept clock synchronization deliberately simple: one-shot offset correction only, no TPSN/FTSP drift-rate estimator.
+- Used four square-corner anchors and fixed seeded unknown-node positions for a reproducible localization experiment.
+- Reported mean, median, P90, maximum error, and failed localization count for each sigma.
+- Generated optional scatter and clock-drift figures in addition to the required error-vs-noise plot.
+
+## Rejected Suggestions
+- Rejected full distributed time synchronization protocols such as TPSN or FTSP for Week 8.
+- Rejected SciPy nonlinear optimization; linearized least squares is sufficient for the required trilateration baseline.
+- Rejected modeling NLOS bias, correlated fading, anchor uncertainty, mobile anchors, or MAC/routing effects during ranging.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_sync_localization.py`: 15 passed.
+- Ran `.venv/bin/python experiments/week08_sync_localization.py`.
+- Inspected `reports/week08_localization_error.csv`; localization error is near zero at `sigma = 0 dB` and increases with RSSI noise.
+- Confirmed generated figures:
+  - `reports/figures/week08_localization_error_vs_noise.png`
+  - `reports/figures/week08_localization_scatter.png`
+  - `reports/figures/week08_clock_drift_error.png`
+
+## Generated Artifacts
+- `reports/week08_localization_error.csv`
+- `reports/figures/week08_localization_error_vs_noise.png`
+- `reports/figures/week08_localization_scatter.png`
+- `reports/figures/week08_clock_drift_error.png`
+
+## Known Limitations
+- RSSI localization assumes known transmit power, path-loss exponent, and independent Gaussian RSSI noise.
+- Trilateration is 2D only and does not estimate covariance or reject outlier anchors.
+- Offset synchronization corrects the clock at one instant but does not estimate drift rate.
+- Localization is static and independent from MAC, routing, ARQ, and packet scheduling.
+
+## Status
+Week 8 sync/localization implementation, tests, experiment, README section, prompt log entry, and report artifacts added. Full test suite passed.
+
+---
+
+Date: 2026-05-15
+
+## Week 8 Figure Improvement Goal
+Improve the Week 8 synchronization/localization experiment figures using the stronger Option A figure set: readable clock drift, localization error boxplot, failure-rate plot, and cleaner scatter plot.
+
+## Context / Files Touched
+- Updated `experiments/week08_sync_localization.py`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+- Regenerated Week 8 CSV and figure outputs under `reports/` and `reports/figures/`.
+
+## Prompt Summary
+- Keep the existing Week 8 scenario: seed `2026`, `100 m x 100 m` area, four corner anchors, `80` unknown nodes, and sigma sweep `[0, 1, 2, 4, 6, 8]`.
+- Change the clock drift plot y-axis from seconds to milliseconds.
+- Replace the mean/median/P90 line plot with a boxplot because RSSI localization errors are skewed and outlier-prone.
+- Add a failure-rate plot by RSSI noise.
+- Make the scatter plot cleaner by drawing error lines for only 10-15 deterministic sample nodes.
+- Add summary quartiles, failure rate, area dimensions, and optional per-node details CSV.
+
+## Accepted Suggestions
+- Kept the sync/localization model unchanged and improved the experiment layer only.
+- Added `reports/week08_localization_details.csv` with one row per sigma/node.
+- Added `p25_error_m`, `p75_error_m`, `area_width_m`, `area_height_m`, and `failure_rate` to the summary CSV.
+- Defined experiment-level failure as solver failure, NaN/infinite estimate, or estimate outside `[-100, 200] m` for the `100 m x 100 m` area.
+- Kept boxplot outliers visible and documented that failed localizations are excluded from the boxplot.
+- Selected 12 scatter error-line examples deterministically from successful localizations using the scenario seed.
+
+## Rejected Suggestions
+- Rejected changing the RSSI/trilateration model itself, since the issue was figure clarity and experiment reporting.
+- Rejected hiding boxplot outliers, because large outliers are scientifically relevant for RSSI localization.
+- Rejected drawing error lines for all 80 nodes in the scatter plot.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_sync_localization.py`: 15 passed.
+- Ran `.venv/bin/python experiments/week08_sync_localization.py`.
+- Inspected `reports/week08_localization_error.csv` and `reports/week08_localization_details.csv`.
+- Confirmed regenerated figures:
+  - `reports/figures/week08_clock_drift_error.png`
+  - `reports/figures/week08_localization_error_boxplot.png`
+  - `reports/figures/week08_localization_failure_rate.png`
+  - `reports/figures/week08_localization_scatter_clean.png`
+
+## Generated Artifacts
+- `reports/week08_localization_error.csv`
+- `reports/week08_localization_details.csv`
+- `reports/figures/week08_clock_drift_error.png`
+- `reports/figures/week08_localization_error_boxplot.png`
+- `reports/figures/week08_localization_failure_rate.png`
+- `reports/figures/week08_localization_scatter_clean.png`
+
+## Status
+Week 8 experiment and figures upgraded to the clearer Option A set. Week 8 tests passed and artifacts were regenerated.
+
+
+---

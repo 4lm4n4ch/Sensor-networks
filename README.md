@@ -4,7 +4,7 @@
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-7: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-8: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, clock drift, RSSI localization, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -35,6 +35,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `topology.py`: Week 5 deterministic node deployments and distance/PRR-based connectivity graphs.
         -   `routing.py`: Week 6 flooding and BFS sink-tree routing baselines with PDR, latency, hop-count, duplicate, overhead, and energy-per-bit metrics.
         -   `reliability.py`: Week 7 link-level ACK/retry ARQ model with deterministic backoff, ACK timeout handling, latency, PDR, retry, and energy metrics.
+        -   `sync_localization.py`: Week 8 node clock drift, simple offset synchronization, RSSI-to-distance conversion, and least-squares 2D trilateration.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -52,6 +53,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week05_topology_connectivity.py`: Generates Week 5 topology and connectivity sweep outputs.
     -   `week06_routing_compare.py`: Generates Week 6 flooding-vs-sink-tree routing comparison outputs.
     -   `week07_reliability_arq.py`: Generates Week 7 retry-limit ARQ trade-off outputs.
+    -   `week08_sync_localization.py`: Generates Week 8 localization error and clock drift outputs.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -609,6 +611,99 @@ reports/figures/week07_reliability_arq_tradeoff.png
 
 Expected interpretation: increasing `retry_limit` should usually raise PDR, while also increasing attempts, ACK traffic, energy use, and delivery latency for packets that require retries.
 
+## Week 8: Time Synchronization and Localization
+
+Week 8 adds `wsnsim.models.sync_localization`, covering a simple sensor-node clock drift model and RSSI-based 2D localization with anchor nodes. The module is NumPy-only and keeps synchronization/localization separate from routing and MAC behavior.
+
+### Clock Drift Model
+
+-   `ClockConfig`: node id, `drift_ppm`, and `offset_s`.
+-   `NodeClock`: converts between true simulation time and raw local clock time.
+-   `TimeSyncResult`: optional one-shot offset synchronization report.
+
+The ppm conversion is:
+
+```text
+drift_factor = 1.0 + drift_ppm * 1e-6
+local_time = offset_s + true_time_s * drift_factor
+```
+
+Positive drift makes the local clock run fast; negative drift makes it run slow. `NodeClock.true_time(local_time_s)` inverts the raw clock mapping. The optional `synchronize_offset(...)` method estimates and applies only an instantaneous offset correction; it does not estimate drift rate like TPSN or FTSP.
+
+The clock-drift experiment plots error in milliseconds so sub-second drift remains readable over a one-hour window:
+
+```text
+clock_error_s = true_time_s * drift_ppm * 1e-6
+```
+
+For example, `100 ppm` produces about `0.36 s` of clock error after `1 hour` (`360 ms`).
+
+### RSSI Localization Model
+
+Localization uses known-position anchors and estimated ranges from RSSI:
+
+-   `AnchorNode`: anchor id and known `(x_m, y_m)` position.
+-   `UnknownNode`: true position used for simulation validation.
+-   `RSSIMeasurement`: anchor id, RSSI in dBm, and inverse estimated distance.
+-   `LocalizationResult`: estimated position, true position, error, success flag, and failure reason.
+
+The log-distance model is:
+
+```text
+path_loss_db = PL(d0) + 10 * n * log10(d / d0)
+rssi_dbm = tx_power_dbm - path_loss_db + noise_db
+estimated_distance = d0 * 10 ** ((tx_power_dbm - PL(d0) - rssi_dbm) / (10 * n))
+```
+
+Distances are validated as positive, and RSSI inversion rejects non-finite values. Noiseless RSSI measurements invert back to the original distance for distances at or above `d0`.
+
+### Trilateration
+
+`trilaterate_2d(...)` implements closed-form linear least squares using `numpy.linalg.lstsq`. It supports 3 or more anchors by subtracting the first range equation from all others. The solver returns a clear `LocalizationError` for fewer than 3 anchors, non-positive ranges, rank-deficient collinear geometry, or extremely ill-conditioned anchor layouts.
+
+### Running Week 8 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_sync_localization.py
+```
+
+To run the complete suite:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+### Running The Sync/Localization Experiment
+
+```bash
+.venv/bin/python experiments/week08_sync_localization.py
+```
+
+The experiment uses four anchors at square corners `(0,0)`, `(100,0)`, `(0,100)`, and `(100,100)`, with `80` seeded random unknown nodes inside a `100 m x 100 m` area. It sweeps RSSI noise/shadowing:
+
+```text
+0, 1, 2, 4, 6, 8 dB
+```
+
+For each sigma, the summary CSV reports mean, median, P25, P75, P90, and maximum localization error over successful localizations, plus failed localization count and failure rate. A detailed per-node CSV is also written. A localization is counted as failed if trilateration fails, the estimate is NaN/infinite, or the estimated position falls outside the generous `[-100, 200] m` bounds used for this `100 m x 100 m` scenario.
+
+Outputs are saved to:
+
+```text
+reports/week08_localization_error.csv
+reports/week08_localization_details.csv
+reports/figures/week08_localization_error_boxplot.png
+reports/figures/week08_localization_failure_rate.png
+reports/figures/week08_localization_scatter_clean.png
+reports/figures/week08_clock_drift_error.png
+```
+
+Expected interpretation: localization error is near zero at `sigma = 0 dB` and the boxplot spread increases as RSSI noise/shadowing increases. Boxplot outliers are shown because RSSI range errors are skewed and can produce large position outliers. Failed or rejected localizations are excluded from the error boxplot and counted separately in the failure-rate plot. The clean scatter plot uses `sigma = 4 dB`, shows all true and estimated points, and draws error lines only for a deterministic 12-node sample so the figure remains readable. The clock figure shows error accumulation for `-50`, `0`, `+50`, and `+100 ppm` drift over one hour with the y-axis in milliseconds.
+
+### Week 8 Limitations
+
+The localization model assumes a known transmit power and path-loss exponent, independent RSSI noise per anchor, static anchors, and 2D geometry. It does not model NLOS bias, multipath correlation, anchor uncertainty, mobile nodes, robust outlier rejection, covariance estimates, or packet-level MAC/routing effects during ranging.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -648,7 +743,7 @@ To set up and run `wsnsim`, follow these steps:
 
 `wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; and reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting; and Week 8 clock/localization behavior including ppm conversion, offset handling, inverse clock conversion, RSSI-distance inversion, least-squares trilateration, ill-conditioned geometry handling, noiseless localization accuracy, and deterministic noisy measurements.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 
