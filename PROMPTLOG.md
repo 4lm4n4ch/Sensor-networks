@@ -456,3 +456,58 @@ Improve the Week 6 routing comparison figures by replacing the single easy scena
 
 ## Status
 Week 6 routing comparison upgraded to communication-range sweep figures and regenerated artifacts. Full test suite passed.
+
+---
+
+Date: 2026-05-15 18:30
+
+## Week 7 Goal
+Build link-level reliability for `wsnsim` using ACK + retry/backoff ARQ, including metrics, tests, a retry-limit comparison experiment, README documentation, generated artifacts, and this prompt-log entry for Milestone 2 preparation.
+
+## Context / Files Touched
+- Added `wsnsim/models/reliability.py`.
+- Updated `wsnsim/models/__init__.py` exports.
+- Added `tests/test_reliability.py`.
+- Added `experiments/week07_reliability_arq.py`.
+- Updated `README.md`.
+- Updated `PROMPTLOG.md`.
+- Generated Week 7 outputs under `reports/` and `reports/figures/`.
+
+## Prompt Summary
+- Implement `ReliabilityConfig`, `TransmissionAttempt`, and `ReliabilityMetrics`.
+- Implement link-level ACK-based ARQ with retry limit, ACK timeout, deterministic seeded backoff, ACK packet energy, and duplicate delivery suppression.
+- Use the Week 1 scheduler for send, data delivery, ACK, timeout, and retry events.
+- Support Week 2 channel PRR sampling or deterministic injected delivery decisions for tests.
+- Use a simple documented per-bit TX/RX energy model consistent with Week 6 routing metrics.
+- Add tests for successful ACK, lost data retry, lost ACK retry/failure behavior, retry-limit handling, deterministic backoff, PDR, attempts/retries, latency, energy, and divide-by-zero safety.
+- Add a Week 7 experiment that sweeps retry limits `[0, 1, 2, 3, 5]` and reports PDR, latency, attempts, ACKs, and energy.
+
+## Accepted Suggestions
+- Kept Week 7 reliability strictly link-level; no end-to-end TCP-like semantics were added.
+- Treated `retry_limit` as retries after the first attempt, giving at most `retry_limit + 1` data transmissions.
+- Modeled ACK loss separately from data loss so a receiver may see the data while the sender still retries.
+- Used local `numpy.random.default_rng(seed)` for deterministic backoff and channel-success sampling.
+- Exposed deterministic injected data/ACK success callables for precise unit tests.
+- Counted ACK packet energy separately using `ack_size_bytes`.
+
+## Rejected Suggestions
+- Rejected full integration with routing, queueing, congestion, hidden terminals, and MAC contention in the first ARQ implementation.
+- Rejected end-to-end retransmission behavior; this is one-hop ARQ only.
+- Rejected global random state and non-deterministic retry timing.
+
+## Validation Steps
+- Ran `.venv/bin/python -m pytest -q tests/test_reliability.py`.
+- Ran `.venv/bin/python -m pytest -q`.
+- Ran `.venv/bin/python experiments/week07_reliability_arq.py`.
+- Confirmed generated outputs:
+  - `reports/week07_reliability_arq.csv`
+  - `reports/figures/week07_reliability_arq_tradeoff.png`
+
+## Known Limitations
+- Reliability is modeled for one logical link at a time; multi-hop route composition is left for later integration.
+- ACK airtime and energy are modeled, but ACK/data contention through the Week 4 MAC is not yet modeled.
+- Channel success is sampled independently per frame from PRR; temporal correlation and burst losses are not modeled.
+- Energy is a simple per-bit accounting model rather than full Week 3 radio-state integration.
+
+## Status
+Week 7 reliability implementation, tests, experiment, README section, prompt log entry, and report artifacts added. Full test suite passed.

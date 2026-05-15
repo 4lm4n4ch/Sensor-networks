@@ -1,10 +1,10 @@
-# wsnsim: Wireless Sensor Network Simulator (Milestone 1)
+# wsnsim: Wireless Sensor Network Simulator
 
 ## Project Overview
 
 `wsnsim` is a Python-based discrete-event simulator designed for Wireless Sensor Networks (WSN). The primary goal is to provide a flexible and deterministic platform for researching various WSN protocols, topologies, and performance metrics.
 
-The current implementation covers Weeks 1-6: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, experiments, documentation, unit tests, and an AI prompt log.
+The current implementation covers Weeks 1-7: a deterministic discrete-event core, radio channel model, state-based energy/lifetime model, ALOHA/CSMA MAC layer, topology/connectivity graphs, routing/data-collection baselines, link-level ACK/retry reliability, experiments, documentation, unit tests, and an AI prompt log.
 
 A **discrete-event simulation** in `wsnsim` models a system as a sequence of events occurring at discrete points in time. The simulator maintains an event list, advancing its internal clock from one event to the next, executing associated callbacks. This approach is highly suitable for WSNs, where actions like message transmissions, sensor readings, or node state changes can be modeled as distinct events.
 
@@ -34,6 +34,7 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
         -   `mac.py`: Week 4 ALOHA and simplified CSMA MAC model with deterministic collision/backoff behavior.
         -   `topology.py`: Week 5 deterministic node deployments and distance/PRR-based connectivity graphs.
         -   `routing.py`: Week 6 flooding and BFS sink-tree routing baselines with PDR, latency, hop-count, duplicate, overhead, and energy-per-bit metrics.
+        -   `reliability.py`: Week 7 link-level ACK/retry ARQ model with deterministic backoff, ACK timeout handling, latency, PDR, retry, and energy metrics.
     -   `core/`: Shared neutral dataclasses used across simulator layers.
         -   `packet.py`: `Packet` dataclass for MAC, routing, reliability, energy, and channel-independent packet metadata.
         -   `link.py`: `LinkStats` dataclass for one calculated transmission attempt.
@@ -49,6 +50,8 @@ The `wsnsim` repository is structured to promote modularity, testability, and cl
     -   `week03_energy_lifetime.py`: Generates Week 3 lifetime-vs-duty-cycle data and plot.
     -   `week04_mac_aloha_csma.py`: Generates Week 4 ALOHA-vs-CSMA CSV and plots.
     -   `week05_topology_connectivity.py`: Generates Week 5 topology and connectivity sweep outputs.
+    -   `week06_routing_compare.py`: Generates Week 6 flooding-vs-sink-tree routing comparison outputs.
+    -   `week07_reliability_arq.py`: Generates Week 7 retry-limit ARQ trade-off outputs.
 -   `.gitignore`: Specifies intentionally untracked files to be ignored by Git.
 -   `PROMPTLOG.md`: Log of interactions with the AI assistant (internal tool file).
 -   `README.md`: This file, providing an overview and documentation of the project.
@@ -544,6 +547,68 @@ reports/figures/week06_routing_energy_per_bit.png
 
 In this deterministic-link setup, Flooding and Sink-tree BFS have the same reachability-limited PDR and first-delivery hop latency, but Flooding shows much higher duplicate/control overhead and energy per bit. The energy figure uses a log-scale y-axis so both protocols remain visible.
 
+## Week 7: Reliability and ARQ
+
+Week 7 adds link-level reliability in `wsnsim.models.reliability`. The model implements ACK-based ARQ for one hop: each data transmission expects an ACK, retries after an ACK timeout, applies deterministic seeded backoff, and drops the packet after `retry_limit` retries. This is link-layer behavior, not end-to-end TCP-style reliability.
+
+### Reliability Architecture
+
+-   `ReliabilityConfig`: ACK enable flag, retry limit, ACK timeout, exponential backoff parameters, RNG seed, ACK size, bitrate, link delays, channel settings, and simple per-bit TX/RX energy costs.
+-   `TransmissionAttempt`: one data attempt with packet id, source/destination, attempt index, send time, ACK deadline, data/ACK success flags, and success/failure state.
+-   `ReliabilityMetrics`: generated, delivered, failed, total attempts, retries, ACK packets, timeouts, PDR, average attempts per packet, average latency, and total energy.
+-   `LinkReliabilityARQ`: scheduler-compatible ARQ engine that schedules send, data delivery, ACK, timeout, and retry events.
+
+### ACK/Retry Semantics
+
+`retry_limit` is the number of retries after the first data transmission, so the maximum data attempts per packet is:
+
+```text
+max_attempts = retry_limit + 1
+```
+
+For each data attempt:
+
+1.  Data TX energy is charged at the sender.
+2.  The channel or injected deterministic decision decides whether data arrives.
+3.  If data arrives and ACKs are enabled, ACK TX energy is charged at the receiver.
+4.  If the ACK arrives before `ack_timeout_s`, the packet is marked delivered exactly once.
+5.  If data or ACK is lost, the sender waits until timeout, backs off, and retries until the retry limit is exhausted.
+
+ACK packets have their own size and energy cost. If an ACK is lost, the receiver may already have seen the data frame, but the sender still retries because it did not receive confirmation. Duplicate successful deliveries are not counted multiple times in the link-level metrics.
+
+### Running Week 7 Tests
+
+```bash
+.venv/bin/python -m pytest -q tests/test_reliability.py
+```
+
+To run the complete suite:
+
+```bash
+.venv/bin/python -m pytest -q
+```
+
+### Running The Reliability Experiment
+
+```bash
+.venv/bin/python experiments/week07_reliability_arq.py
+```
+
+The experiment sweeps retry limits:
+
+```text
+0, 1, 2, 3, 5
+```
+
+It uses a single lossy link over the Week 2 log-distance channel with ACKs enabled and reports the delivery/energy/latency trade-off. Outputs are saved to:
+
+```text
+reports/week07_reliability_arq.csv
+reports/figures/week07_reliability_arq_tradeoff.png
+```
+
+Expected interpretation: increasing `retry_limit` should usually raise PDR, while also increasing attempts, ACK traffic, energy use, and delivery latency for packets that require retries.
+
 ## Installation & Running
 
 To set up and run `wsnsim`, follow these steps:
@@ -583,7 +648,7 @@ To set up and run `wsnsim`, follow these steps:
 
 `wsnsim` emphasizes robust testing to ensure correctness and deterministic behavior across the simulator modules.
 
--   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; and routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks.
+-   **What is tested**: Unit tests cover core components like the `Scheduler`, `SimClock`, `TraceLogger`, and `RNG` reproducibility; channel behavior such as path loss/RSSI/SNR trends, PRR bounds, validation, and reproducible shadowing; energy behavior such as `energy_j = power_w * duration_s`, depletion clamping, state transitions, lifetime trends, and scheduler-driven integration; MAC collision/backoff behavior; topology reproducibility, coordinate bounds, grid placement, distance graphs, connected components, and sink reachability; routing behavior including flooding TTL/duplicates, sink-tree parent maps, unreachable drops, deterministic behavior, and metric sanity checks; and reliability behavior including data loss, ACK loss, retry limits, deterministic backoff, PDR, latency, and energy accounting.
 -   **Deterministic Testing Approach**: Tests for the `Scheduler` specifically verify that events are executed in the correct chronological order, and that tie-breaking rules (priority, then sequence) are strictly followed, irrespective of the order events are scheduled.
 -   **Reproducibility**: The `RNG` tests explicitly confirm that simulations initialized with the same seed produce identical sequences of random numbers, ensuring that simulation results can be reproduced exactly.
 

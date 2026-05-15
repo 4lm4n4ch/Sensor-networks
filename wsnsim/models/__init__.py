@@ -19,6 +19,17 @@ from .mac import (
     Transmission,
     transmission_intervals_overlap,
 )
+from .reliability import (
+    AttemptStatus,
+    LinkReliabilityARQ,
+    ReliabilityARQ,
+    ReliabilityConfig,
+    ReliabilityEvent,
+    ReliabilityEventType,
+    ReliabilityMetrics,
+    ReliabilityResult,
+    TransmissionAttempt,
+)
 from .routing import (
     FloodingRouting,
     RouteDecision,
@@ -48,6 +59,14 @@ __all__ = [
     "Node",
     "PacketStatus",
     "PowerProfile",
+    "AttemptStatus",
+    "LinkReliabilityARQ",
+    "ReliabilityARQ",
+    "ReliabilityConfig",
+    "ReliabilityEvent",
+    "ReliabilityEventType",
+    "ReliabilityMetrics",
+    "ReliabilityResult",
     "RouteDecision",
     "RoutingAction",
     "RoutingConfig",
@@ -57,5 +76,6 @@ __all__ = [
     "Topology",
     "TopologyConfig",
     "Transmission",
+    "TransmissionAttempt",
     "transmission_intervals_overlap",
 ]
