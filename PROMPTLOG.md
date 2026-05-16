@@ -1203,3 +1203,51 @@ critical test and experiment commands.
 ## Status
 Week 14 / M4 final case study, reproducibility artifacts, final report,
 presentation outline, README, and prompt log closure added.
+
+
+---
+
+Date: 2026-05-16
+
+## Week 14 / M4 finalization - PDF-based readiness audit
+
+### Goal
+Finalize `wsnsim` for the best possible M4 submission using `WSN_Gyakorlati_Utmutato_wsnsim_v1_1.pdf` as the authoritative specification.
+
+### Context
+The repository already contained the full weekly module sequence, tests, M4 case study, final experiment, README, and presentation material. This pass extracted the PDF requirements locally, audited the repository against them, filled documentation gaps, and reran verification.
+
+### Prompt summary
+The AI assistant was asked to read the course PDF, extract Week 1-14 and M1-M4 requirements, compare them against the repo, implement reasonable missing pieces, run tests/experiments, update documentation, and produce a strict readiness report.
+
+### Accepted suggestions
+- Added `reports/pdf_requirements_matrix.md` mapping PDF requirements to repo evidence.
+- Added `reports/repo_audit.md` with structure, modules, tests, experiments, artifacts, documentation, and problems found.
+- Added `reports/m4_presentation_outline.md` and `reports/m4_reviewer_questions.md` for final presentation/review readiness.
+- Added `reports/week09_aggregation.md` as the PDF-requested Week 9 mini-report pointer.
+- Replaced the stale Week 8 synchronization placeholder with an evidence-based summary and artifact paths.
+- Kept implementations deterministic and lightweight; no heavy ML or crypto dependencies were introduced.
+
+### Rejected or modified suggestions
+- Did not change working simulator APIs because test coverage already confirmed the critical modules.
+- Did not delete `__pycache__`, `.pytest_cache`, or `.venv` automatically; they are cleanup/export recommendations rather than source fixes.
+- Did not invent requirements hidden in unreadable PDF areas; requirements were taken from the locally extracted text.
+
+### Validation
+- Extracted PDF text locally using embedded ToUnicode maps because `pdftotext`, `pypdf`, `PyPDF2`, and `pdfminer` were unavailable.
+- Ran `.venv/bin/python -m pytest -q`: 123 passed.
+- Ran major final-stage experiments, including Week 10, Week 11, Week 12, Week 13, and M4 final case study.
+- Rechecked generated M4 CSV, config dump, figures, README, PROMPTLOG, final report, presentation outline, and reviewer questions.
+
+### Files changed
+- `README.md`
+- `PROMPTLOG.md`
+- `reports/pdf_requirements_matrix.md`
+- `reports/repo_audit.md`
+- `reports/week08_sync.md`
+- `reports/week09_aggregation.md`
+- `reports/m4_presentation_outline.md`
+- `reports/m4_reviewer_questions.md`
+
+### Status
+PDF-based final readiness audit completed. The repository satisfies the M4-critical requirements, with only optional cleanup/export hygiene remaining.
