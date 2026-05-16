@@ -14,7 +14,7 @@ energy/security/aggregation/Edge AI/FL -> metrics -> Pareto optimizer.
 
 # Slide 4 - Scenario
 
-Environmental monitoring WSN, seed `2026`, 35 sensor nodes, `100 m x 100 m`
+Environmental monitoring WSN, seed `42069`, 35 sensor nodes, `100 m x 100 m`
 area, center sink, 12 reports per node, 48 B payloads, anomaly/event traffic.
 Topology figure: `reports/figures/m4_final_topology.png`.
 

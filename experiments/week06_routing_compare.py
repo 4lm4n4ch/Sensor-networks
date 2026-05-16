@@ -35,7 +35,7 @@ ENERGY_FIGURE_PATH = FIGURES_DIR / "week06_routing_energy_per_bit.png"
 class ExperimentScenario:
     """Fixed Week 6 comparison parameters except communication range."""
 
-    seed: int = 2026
+    seed: int = 42069
     node_count: int = 25
     area_width_m: float = 100.0
     area_height_m: float = 100.0

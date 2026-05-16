@@ -39,7 +39,7 @@ DRIFT_FIGURE_PATH = FIGURES_DIR / "week08_clock_drift_error.png"
 class ExperimentScenario:
     """Fixed Week 8 localization scenario."""
 
-    seed: int = 2026
+    seed: int = 42069
     area_width_m: float = 100.0
     area_height_m: float = 100.0
     n_unknown_nodes: int = 80
@@ -311,7 +311,7 @@ def plot_localization_scatter(
     scatter_rows: list[dict[str, float | int | str | bool]],
     scenario: ExperimentScenario,
 ) -> None:
-    \"\"\"Plot true and estimated node positions for one noise level.\"\"\"\
+    """Plot true and estimated node positions for one noise level."""
     fig, ax = plt.subplots(figsize=(6.5, 6.0))
     anchor_x = [anchor.x_m for anchor in anchors]
     anchor_y = [anchor.y_m for anchor in anchors]

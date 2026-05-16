@@ -4,7 +4,7 @@
 
 Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic.
 
-- Deterministic seed: `2026`
+- Deterministic seed: `42069`
 - Nodes: `35` sensors plus one sink
 - Area: `100.0 m x 100.0 m`
 - Sink position: `[50.0, 50.0]` m

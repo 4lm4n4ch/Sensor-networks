@@ -6,7 +6,7 @@ Can simple edge anomaly detection reduce WSN communication by transmitting only 
 
 ## Scenario and Settings
 
-- Seed: `2026`
+- Seed: `42069`
 - Nodes: `25`
 - Timesteps: `200`
 - Baseline samples: `5000`
@@ -27,8 +27,8 @@ Undefined precision/recall-style metrics are written as `0.0` when their denomin
 
 ## Results
 
-- Best F1 threshold: `2.5` with F1 `0.529`, saving `0.959`, FNR `0.504`.
-- Highest saving threshold: `3.5` with saving `0.985` and FNR `0.763`.
+- Best F1 threshold: `2.0` with F1 `0.511`, saving `0.915`, FNR `0.302`.
+- Highest saving threshold: `3.5` with saving `0.985` and FNR `0.767`.
 
 Figures:
 

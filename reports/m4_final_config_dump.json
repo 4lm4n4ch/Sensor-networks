@@ -11,7 +11,7 @@
       "radio_range_m": 40.0,
       "retry_limit": 0,
       "security_enabled": false,
-      "seed": 2026
+      "seed": 42069
     },
     {
       "aggregation_threshold": 0.0,
@@ -24,7 +24,7 @@
       "radio_range_m": 55.0,
       "retry_limit": 4,
       "security_enabled": true,
-      "seed": 2026
+      "seed": 42069
     },
     {
       "aggregation_threshold": 0.45,
@@ -37,7 +37,7 @@
       "radio_range_m": 55.0,
       "retry_limit": 2,
       "security_enabled": true,
-      "seed": 2026
+      "seed": 42069
     }
   ],
   "objectives": [
@@ -87,7 +87,7 @@
     "node_count": 35,
     "payload_bytes": 48,
     "samples_per_node": 12,
-    "seed": 2026,
+    "seed": 42069,
     "sink_position_m": [
       50.0,
       50.0
@@ -128,7 +128,7 @@
       true
     ],
     "seed": [
-      2026
+      42069
     ]
   }
 }

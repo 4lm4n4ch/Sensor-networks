@@ -32,7 +32,7 @@ FIGURE_PATH = FIGURES_DIR / "week07_reliability_arq_tradeoff.png"
 class ExperimentScenario:
     """Fixed Week 7 link scenario except retry limit."""
 
-    seed: int = 2026
+    seed: int = 42069
     packet_count: int = 200
     source_id: int = 1
     destination_id: int = 2

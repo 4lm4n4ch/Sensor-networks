@@ -139,13 +139,13 @@ def test_deterministic_behavior_with_fixed_seed_for_synthetic_readings():
     first = generate_synthetic_readings(
         [3, 1, 2],
         [2.0, 0.0, 1.0],
-        seed=2026,
+        seed=42069,
         noise_std=0.1,
     )
     second = generate_synthetic_readings(
         [3, 1, 2],
         [2.0, 0.0, 1.0],
-        seed=2026,
+        seed=42069,
         noise_std=0.1,
     )
 

@@ -30,7 +30,7 @@ class SecurityConfig:
     sequence_window: int = 0
     cpu_cost_per_byte_j: float = 2.0e-9
     verify_cost_per_byte_j: float = 3.0e-9
-    seed: int = 2026
+    seed: int = 42069
     latency_cost_per_byte_s: float = 2.0e-6
 
     def __post_init__(self) -> None:

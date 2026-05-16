@@ -156,7 +156,7 @@ def test_localization_error_is_near_zero_in_noiseless_case():
     config = RSSILocalizationConfig(
         path_loss_exponent=2.0,
         sigma_db=0.0,
-        seed=2026,
+        seed=42069,
     )
     measurements = generate_rssi_measurements(anchors, unknown, config)
 

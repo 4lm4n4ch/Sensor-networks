@@ -1,9 +1,9 @@
 communication_range_m,average_degree,sink_reachability_ratio,all_nodes_reach_sink
-10.0,1.65,0.375,False
-15.0,3.45,0.425,False
-20.0,6.05,0.8,False
-25.0,8.45,1.0,True
-30.0,11.2,1.0,True
-35.0,14.4,1.0,True
-40.0,17.7,1.0,True
-45.0,21.2,1.0,True
+10.0,1.25,0.075,False
+15.0,2.8,0.2,False
+20.0,5.15,0.725,False
+25.0,7.4,0.975,False
+30.0,9.85,1.0,True
+35.0,12.4,1.0,True
+40.0,15.0,1.0,True
+45.0,17.65,1.0,True

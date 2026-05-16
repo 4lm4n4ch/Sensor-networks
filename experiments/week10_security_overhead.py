@@ -37,7 +37,7 @@ CPU_FIGURE_PATH = FIGURES_DIR / "week10_security_cpu_energy.png"
 class ExperimentScenario:
     """Fixed Week 10 security-overhead scenario."""
 
-    seed: int = 2026
+    seed: int = 42069
     n_packets: int = 1000
     payload_bytes: int = 64
     auth_tag_bytes: int = 8

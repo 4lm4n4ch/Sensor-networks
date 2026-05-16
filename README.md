@@ -29,7 +29,7 @@ nodes, one sink, periodic sensor reports, and anomaly/event traffic.
 
 - Topology: 35 sensors in a `100 m x 100 m` area with the sink at the center.
 - Traffic: 12 periodic reports per node, 48 B payloads, event probability 0.05.
-- Seed: `2026`.
+- Seed: `42069`.
 - Metrics: PDR, mean latency, energy per delivered packet, total transmitted
   bytes, communication saving ratio, lifetime proxy, security coverage, and
   Edge AI overhead/recall.
@@ -49,6 +49,32 @@ nodes, one sink, periodic sensor reports, and anomaly/event traffic.
 - `wsnsim.models.edge_ai`: anomaly detection and communication saving metrics.
 - `wsnsim.models.federated`: toy FedAvg communication-cost baseline.
 - `wsnsim.models.optimization`: grid search, Pareto front, candidate ranking.
+
+
+## Weekly and milestone commits
+
+| Checkpoint | Last/representative commit | Note |
+| --- | --- | --- |
+| Week 1 | `25bd3c0` | `first week` |
+| Week 2 | `16e2ec6` | No separate Week 2 commit was listed; M1 commit contains the Week 2 evidence. |
+| Week 3 | `cfbc5a7` | `Week3 implementation` |
+| Week 4 | `b6d0a9e` | `week 4 commit` |
+| Week 5 | `95d8f21` | `Week 5 commit` |
+| Week 6 | `9092f7f` | No separate Week 6 commit was listed; closest routing/protocol checkpoint. |
+| Week 7 | `c25d52c` | Latest Week 7 checkpoint, `WEEK 7.` |
+| Week 8 | `4587a78` | `Week 8` |
+| Week 9 | `e3074fb` | `Week 9 commit` |
+| Week 10 | `b31bd55` | `Week 10` |
+| Week 11 | `81fda9c` | `week 11` |
+| Week 12 | `dedb8ed` | `week 12` |
+| Week 13 | `2682e58` | Latest Week 13 checkpoint, `week 13 don` |
+| Week 14 | `018878e` | `week 14` |
+| Milestone 1 | `16e2ec6` | `milestone 1 commit` |
+| Milestone 2 | `c25d52c` | Protocol milestone represented by the latest Week 7 checkpoint. |
+| Milestone 3 | `e5962b2` | `m3` |
+| Milestone 4 | `347c80f` | Latest M4 checkpoint, `M4 v2` |
+
+A fuller audit table is also kept in `reports/weekly_commit_shas.md`.
 
 ## Final M4 case study
 

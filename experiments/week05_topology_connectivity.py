@@ -186,7 +186,7 @@ def plot_range_sweep(rows: list[dict[str, float | bool]], *, seed: int | None) -
 
 def main() -> None:
     """Run the Week 5 topology connectivity experiment."""
-    seed = 2026
+    seed = 42069
     graph_range_m = 28.0
     config = TopologyConfig(
         node_count=40,

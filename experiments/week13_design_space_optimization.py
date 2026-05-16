@@ -64,7 +64,7 @@ class Week13Scenario:
 def parameter_grid() -> dict[str, list[object]]:
     """Return the deterministic Week 13 design-space grid."""
     return {
-        "seed": [2026, 2027],
+        "seed": [42069, 42070],
         "node_count": [20, 35],
         "mac": ["aloha", "csma"],
         "retry_limit": [0, 2, 4],

@@ -39,7 +39,7 @@ class SensorSample:
 class SignalGeneratorConfig:
     """Configuration for deterministic synthetic WSN sensor signals."""
 
-    seed: int = 2026
+    seed: int = 42069
     n_nodes: int = 25
     n_timesteps: int = 200
     baseline_mean: float = 20.0

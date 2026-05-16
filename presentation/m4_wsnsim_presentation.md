@@ -12,7 +12,7 @@ Core scheduler -> channel/topology -> MAC/routing/reliability -> energy/security
 
 # Slide 4 - Scenario
 
-Seed `2026`, `35` nodes, `100.0 m x 100.0 m`, `12` reports per node, `48 B` payloads. Figure: `reports/figures/m4_final_topology.png`.
+Seed `42069`, `35` nodes, `100.0 m x 100.0 m`, `12` reports per node, `48 B` payloads. Figure: `reports/figures/m4_final_topology.png`.
 
 # Slide 5 - Design alternatives
 

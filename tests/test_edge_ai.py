@@ -26,7 +26,7 @@ def sample(value: float, *, anomaly: bool = False, timestamp: float = 0.0) -> Se
 
 def test_signal_generation_is_deterministic_with_fixed_seed():
     config = SignalGeneratorConfig(
-        seed=2026,
+        seed=42069,
         n_nodes=4,
         n_timesteps=5,
         anomaly_probability=0.2,

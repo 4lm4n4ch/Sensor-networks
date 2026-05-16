@@ -22,7 +22,7 @@
 
 ## Final case study
 
-The final case study is `environmental_monitoring_wsn`: Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic. It uses seed `2026`, `35` nodes, a `100.0 m x 100.0 m` area, `12` reports per node, and `48 B` payloads.
+The final case study is `environmental_monitoring_wsn`: Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic. It uses seed `42069`, `35` nodes, a `100.0 m x 100.0 m` area, `12` reports per node, and `48 B` payloads.
 
 ## Design alternatives
 
@@ -44,7 +44,7 @@ The final case study is `environmental_monitoring_wsn`: Static environmental mon
 ## Experiment setup
 
 - Config path: `configs/m4_final.json`
-- Seed: `2026`
+- Seed: `42069`
 - Sweep configurations plus alternatives: `219`
 - Sweep dimensions: MAC, retry limit, radio range, aggregation threshold, security enabled, and Edge AI enabled.
 

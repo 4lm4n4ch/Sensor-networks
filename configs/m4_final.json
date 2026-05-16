@@ -2,7 +2,7 @@
   "scenario": {
     "name": "environmental_monitoring_wsn",
     "description": "Static environmental monitoring WSN with periodic sensor readings and anomaly/event traffic.",
-    "seed": 2026,
+    "seed": 42069,
     "node_count": 35,
     "area_width_m": 100.0,
     "area_height_m": 100.0,
@@ -24,7 +24,7 @@
     {
       "config_id": "alt_A_low_energy",
       "design_label": "Alternative A - low-energy baseline",
-      "seed": 2026,
+      "seed": 42069,
       "node_count": 35,
       "mac": "csma",
       "retry_limit": 0,
@@ -37,7 +37,7 @@
     {
       "config_id": "alt_B_reliability",
       "design_label": "Alternative B - reliability-oriented",
-      "seed": 2026,
+      "seed": 42069,
       "node_count": 35,
       "mac": "csma",
       "retry_limit": 4,
@@ -50,7 +50,7 @@
     {
       "config_id": "alt_C_balanced",
       "design_label": "Alternative C - balanced secured edge",
-      "seed": 2026,
+      "seed": 42069,
       "node_count": 35,
       "mac": "csma",
       "retry_limit": 2,
@@ -62,7 +62,7 @@
     }
   ],
   "sweep": {
-    "seed": [2026],
+    "seed": [42069],
     "node_count": [35],
     "mac": ["aloha", "csma"],
     "retry_limit": [0, 2, 4],

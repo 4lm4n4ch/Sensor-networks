@@ -240,7 +240,7 @@ def main() -> None:
     simulation_duration_s = 20.0
     node_count = 10
     packet_duration_s = 0.02
-    base_seed = 2026
+    base_seed = 42069
 
     rows: list[dict[str, float | int | str]] = []
     for load_index, offered_load_pps in enumerate(load_settings_pps):

@@ -34,7 +34,7 @@ ACCURACY_FIGURE_PATH = FIGURES_DIR / "week12_comm_cost_vs_proxy_accuracy.png"
 class ExperimentScenario:
     """Fixed Week 12 FL communication-cost scenario."""
 
-    seed: int = 2026
+    seed: int = 42069
     n_nodes: int = 25
     model_size_params: int = 8
     rounds: int = 20

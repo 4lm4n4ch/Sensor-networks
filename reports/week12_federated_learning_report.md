@@ -16,7 +16,7 @@ Federated Learning is relevant for WSNs because sensor nodes can keep raw measur
 - Local update rule: `2` steps with learning rate `0.35` toward local synthetic statistics
 - Update-period sweep: `1, 2, 4, 5` rounds
 - Participation rate: `1.0`
-- Deterministic seed: `2026`
+- Deterministic seed: `42069`
 
 ## Communication cost model
 

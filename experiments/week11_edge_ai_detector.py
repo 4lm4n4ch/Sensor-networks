@@ -38,7 +38,7 @@ REPORT_PATH = REPORTS_DIR / "week11_edge_ai_report.md"
 class ExperimentScenario:
     """Fixed Week 11 edge anomaly-detection scenario."""
 
-    seed: int = 2026
+    seed: int = 42069
     n_nodes: int = 25
     n_timesteps: int = 200
     baseline_mean: float = 20.0

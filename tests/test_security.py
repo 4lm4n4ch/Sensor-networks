@@ -52,7 +52,7 @@ def test_old_sequence_number_is_rejected():
 
 
 def test_replay_attack_is_rejected():
-    security = SecurityLayer(SecurityConfig(seed=2026))
+    security = SecurityLayer(SecurityConfig(seed=42069))
     legitimate = security.make_metadata(sender_id=2, receiver_id=0)
 
     accepted = security.check_packet(legitimate, payload_bytes=64)
@@ -122,8 +122,8 @@ def test_metrics_count_accepted_rejected_and_replay_packets_correctly():
 
 
 def test_behavior_is_deterministic_with_fixed_seed():
-    first = SecurityLayer(SecurityConfig(seed=2026))
-    second = SecurityLayer(SecurityConfig(seed=2026))
+    first = SecurityLayer(SecurityConfig(seed=42069))
+    second = SecurityLayer(SecurityConfig(seed=42069))
 
     first_metadata = [
         first.make_metadata(sender_id=1, receiver_id=0)

@@ -35,7 +35,7 @@ FIGURE_PATH = FIGURES_DIR / "week09_aggregation_compression_tradeoff.png"
 class ExperimentScenario:
     """Fixed Week 9 aggregation scenario."""
 
-    seed: int = 2026
+    seed: int = 42069
     node_count: int = 25
     area_width_m: float = 100.0
     area_height_m: float = 100.0

@@ -18,7 +18,7 @@ import numpy as np
 class FederatedConfig:
     """Configuration for a deterministic toy FedAvg simulation."""
 
-    seed: int = 2026
+    seed: int = 42069
     n_nodes: int = 25
     model_size_params: int = 8
     rounds: int = 20

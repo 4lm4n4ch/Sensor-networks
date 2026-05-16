@@ -18,7 +18,7 @@ The M4 objectives are:
 
 ## How is randomness controlled?
 
-The final config fixes seed `2026` in `configs/m4_final.json`. The experiment
+The final config fixes seed `42069` in `configs/m4_final.json`. The experiment
 dumps the exact config used to `reports/m4_final_config_dump.json`.
 
 ## What is simplified?
