@@ -602,6 +602,7 @@ def _write_reproducibility(
                 f"`{paths.topology_figure}`",
                 "- [x] Dependencies documented in `requirements.txt`.",
                 "- [x] README explains tests and final experiment reproduction.",
+                "- [x] PROMPTLOG is updated and closed for M4 submission.",
                 "- [x] Pareto candidates are marked in the CSV with `is_pareto`.",
                 "- [x] Objective directions are explicit in the config dump.",
                 "",

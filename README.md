@@ -34,7 +34,7 @@ nodes, one sink, periodic sensor reports, and anomaly/event traffic.
   bytes, communication saving ratio, lifetime proxy, security coverage, and
   Edge AI overhead/recall.
 
-## Modules
+## Implemented modules
 
 - `wsnsim.sim`: deterministic scheduler and simulation clock.
 - `wsnsim.models.channel`: log-distance PRR(distance) radio channel.
